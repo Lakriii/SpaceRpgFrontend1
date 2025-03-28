@@ -1,0 +1,30 @@
+/* 🌌 Deep Space Background */
+.bg-stars {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0, 132, 255, 0.15) 10%, rgba(0, 0, 20, 0.9) 80%);
+    overflow: hidden;
+}
+
+/* 🌠 Shooting Stars Effect */
+.shooting-star {
+    position: absolute;
+    width: 2px;
+    height: 80px;
+    background: linear-gradient(transparent, rgba(255, 255, 255, 0.8), transparent);
+    filter: blur(2px);
+    opacity: 0.7;
+    animation: shootingStarMove linear infinite;
+}
+
+/* ✨ Keyframes for Shooting Star */
+@keyframes shootingStarMove {
+    from {
+        transform: translateY(-100px) translateX(-100px) rotate(-45deg);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(500px) translateX(500px) rotate(-45deg);
+        opacity: 0;
+    }
+}

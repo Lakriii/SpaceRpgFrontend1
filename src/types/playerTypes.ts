@@ -1,0 +1,23 @@
+export interface Player {
+    level: number | null;
+    class_type: string | null;
+    hp: number | null;
+    max_hp: number | null;
+    energy: number | null;
+    max_energy: number | null;
+    stamina: number | null;
+    strength: number | null;
+    defense: number | null;
+    agility: number | null;
+    intelligence: number | null;
+    luck: number | null;
+    credits: number | null;
+    experience: number | null;
+    next_level_exp: number | null;
+    fights_won: number | null;
+    fights_lost: number | null;
+    missions_completed: number | null;
+    missions_failed: number | null;
+    equipped_weapon: string | null;
+    equipped_armor: string | null;
+  }

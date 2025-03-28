@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "./fonts.css";
+@import "./background.css";
+@import "./buttons.css";
+@import "./effects.css";
+@import "./animations.css";
+@import "./typography.css";
+@import "./borders.css";
+@import "./shipStats.css";
+
+:root {
+  --background: #000;
+  --foreground: #ededed;
+  --neon-blue: rgba(0, 132, 255, 1);
+  --neon-purple: rgba(160, 32, 240, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Orbitron", Arial, Helvetica, sans-serif;
+}

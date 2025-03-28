@@ -1,0 +1,70 @@
+/* 🌀 Rarity Labels */
+.rarity-common {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ddd;
+  }
+  
+  .rarity-rare {
+    background: rgba(0, 132, 255, 0.2);
+    color: #0084ff;
+    box-shadow: 0px 0px 10px rgba(0, 132, 255, 0.5);
+  }
+  
+  .rarity-epic {
+    background: rgba(160, 32, 240, 0.2);
+    color: #a020f0;
+    box-shadow: 0px 0px 10px rgba(160, 32, 240, 0.5);
+  }
+  
+  .rarity-legendary {
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffa500;
+    box-shadow: 0px 0px 10px rgba(255, 165, 0, 0.5);
+  }
+
+  /* 💰 Holografický sci-fi text pre kredity */
+.credit-holo-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ffcc00;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.7), 0 0 20px rgba(255, 204, 0, 0.5);
+    transition: text-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
+  
+  /* 🌀 Efekt jemného pulzovania */
+  .credit-holo-text:hover {
+    text-shadow: 0 0 15px rgba(255, 204, 0, 0.9), 0 0 25px rgba(255, 255, 100, 0.8);
+    transform: scale(1.1);
+  }
+
+  /* 🌌 Neon Glow Stat Labels */
+.stat-label {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  /* ⚡ Animated Progress Bars */
+  .stat-bar {
+    transition: width 0.4s ease-in-out;
+  }
+
+  /* 🚀 Smooth Animated Bars */
+.stat-bar {
+    transition: width 0.6s ease-in-out;
+  }
+  
+  /* 💡 Futuristic Number Glow */
+  .stat-bar span {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+  }
+  
+  /* 🌌 Sci-Fi Label Styling */
+  .stat-label {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+  }
