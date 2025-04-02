@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import NavLink from "./NavLink";
+import CustomButton from "../ui/CustumButton";
+
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -38,25 +41,11 @@ export default function Navbar() {
 
       <div className="hidden md:flex items-center space-x-6">
         {navLinks.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`px-4 py-2 rounded-md transition-all ${
-              pathname === link.href
-                ? "text-blue-400 border-b-2 border-blue-400 neon-glow"
-                : "hover:text-blue-300 hover:bg-gray-800/50"
-            }`}
-          >
-            {link.label}
-          </Link>
+          <NavLink key={link.href} href={link.href} label={link.label} />
         ))}
+      
 
-        <button
-          onClick={handleLogout}
-          className="ml-4 px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-sm font-bold transition-all"
-        >
-          Log Out
-        </button>
+      <CustomButton onClick={handleLogout} text="Log Out" />
       </div>
     </nav>
   );
