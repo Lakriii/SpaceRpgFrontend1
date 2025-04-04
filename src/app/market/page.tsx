@@ -1,6 +1,30 @@
 "use client";
 
-import Link from "next/link";
+import MarketCard from "@/components/market/MarketCard";
+
+const markets = [
+  {
+    href: "/market/local",
+    icon: "🏙",
+    title: "Local Market",
+    description: "Trade goods at your current location.",
+    textColor: "text-blue-400",
+  },
+  {
+    href: "/market/galactic",
+    icon: "🌌",
+    title: "Galactic Market",
+    description: "Buy & sell goods across the universe.",
+    textColor: "text-green-400",
+  },
+  {
+    href: "/market/black",
+    icon: "🚨",
+    title: "Black Market",
+    description: "Trade illegal items and rare artifacts.",
+    textColor: "text-red-400",
+  },
+];
 
 export default function MarketPage() {
   return (
@@ -11,29 +35,9 @@ export default function MarketPage() {
       </p>
 
       <div className="mt-6 grid grid-cols-3 gap-6">
-        {/* Lokálny trh */}
-        <Link href="/market/local">
-          <div className="glassmorphism p-6 rounded-lg hover:scale-105 transition-all text-center cursor-pointer">
-            <h3 className="text-xl font-semibold text-blue-400">🏙 Local Market</h3>
-            <p className="text-gray-300">Trade goods at your current location.</p>
-          </div>
-        </Link>
-
-        {/* Galaktický trh */}
-        <Link href="/market/galactic">
-          <div className="glassmorphism p-6 rounded-lg hover:scale-105 transition-all text-center cursor-pointer">
-            <h3 className="text-xl font-semibold text-green-400">🌌 Galactic Market</h3>
-            <p className="text-gray-300">Buy & sell goods across the universe.</p>
-          </div>
-        </Link>
-
-        {/* Čierny trh */}
-        <Link href="/market/black">
-          <div className="glassmorphism p-6 rounded-lg hover:scale-105 transition-all text-center cursor-pointer">
-            <h3 className="text-xl font-semibold text-red-400">🚨 Black Market</h3>
-            <p className="text-gray-300">Trade illegal items and rare artifacts.</p>
-          </div>
-        </Link>
+        {markets.map((market) => (
+          <MarketCard key={market.href} {...market} />
+        ))}
       </div>
     </div>
   );
