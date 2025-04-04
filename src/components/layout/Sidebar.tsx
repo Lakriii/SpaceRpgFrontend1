@@ -1,36 +1,28 @@
 "use client";
 
-interface SidebarLink {
+import SidebarLink from "./SidebarLink";
+interface SidebarLinkProps {
   href: string;
   icon: string;
   label: string;
 }
 
 interface SidebarProps {
-  links: SidebarLink[];
+  links?: SidebarLinkProps[]; // 🛠️ Nastavené ako voliteľné pole, aby sa predišlo chybám
 }
 
-export default function Sidebar({ links }: SidebarProps) {
+/* 🔷 Sidebar Komponenta */
+export default function Sidebar({ links = [] }: SidebarProps) {
   return (
     <aside className="w-72 shrink-0 bg-gray-900 glassmorphism p-6 sci-fi-border">
       <nav className="flex flex-col space-y-3">
-        {links.map((link) => (
-          <SidebarItem key={link.href} {...link} />
-        ))}
+        {links.length > 0 ? (
+          links.map((link) => <SidebarLink key={link.href} {...link} />)
+        ) : (
+          <p className="text-gray-400 text-sm">No links available</p>
+        )}
       </nav>
     </aside>
   );
 }
 
-function SidebarItem({ href, icon, label }: SidebarLink) {
-  return (
-    <a
-      href={href}
-      className="flex items-center space-x-3 p-4 rounded-lg text-lg font-semibold transition-all duration-300 
-                 bg-gray-800/50 border border-transparent hover:border-blue-400 hover:bg-gray-800 hover:text-blue-400"
-    >
-      <span className="text-xl">{icon}</span>
-      <span>{label}</span>
-    </a>
-  );
-}
