@@ -1,6 +1,8 @@
 "use client";
 
-import { mockGalacticMarket } from "@/data/mockGalacticMarket";
+import { mockGalacticMarket } from "@/data/mockGalacticMarket"; // Importujeme nový mock dát
+import MarketItem from "@/components/market/MarketItem";
+
 
 export default function GalacticMarket() {
   return (
@@ -12,19 +14,18 @@ export default function GalacticMarket() {
 
       <div className="mt-6 grid gap-6">
         {mockGalacticMarket.items.map((item) => (
-          <div key={item.id} className="glassmorphism p-6 rounded-lg flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-semibold text-green-400">{item.name}</h3>
-              <p className="text-gray-300">{item.description}</p>
-              <p className="text-yellow-300 text-lg font-bold">💰 {item.price} Credits</p>
-              <p className="text-gray-400 text-sm">⏳ Delivery Time: {item.delivery_time} cycles</p>
-            </div>
-            <button className="px-6 py-3 rounded-full neon-button transition-all hover:scale-105">
-              Order
-            </button>
-          </div>
+          <MarketItem
+            key={item.id}
+            name={item.name}
+            description={item.description}
+            price={item.price}
+            delivery_time={item.delivery_time}
+          />
         ))}
       </div>
     </div>
   );
 }
+
+
+

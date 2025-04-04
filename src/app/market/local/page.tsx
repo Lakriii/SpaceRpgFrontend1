@@ -1,6 +1,7 @@
 "use client";
 
 import { mockLocalMarket } from "@/data/mockLocalMarket";
+import MarketItemCard from "@/components/market/MarketItemCard"; // Importujeme MarketItemCard
 
 export default function LocalMarket() {
   if (!mockLocalMarket || !mockLocalMarket.items) {
@@ -19,17 +20,14 @@ export default function LocalMarket() {
       </p>
 
       <div className="mt-6 grid gap-6">
+        {/* Iterujeme cez položky a vykresľujeme každú pomocou MarketItemCard */}
         {mockLocalMarket.items.map((item) => (
-          <div key={item.id} className="glassmorphism p-6 rounded-lg flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-semibold text-blue-400">{item.name}</h3>
-              <p className="text-gray-300">{item.description}</p>
-              <p className="text-yellow-300 text-lg font-bold">💰 {item.price} Credits</p>
-            </div>
-            <button className="px-6 py-3 rounded-full neon-button transition-all hover:scale-105">
-              Purchase
-            </button>
-          </div>
+          <MarketItemCard
+            key={item.id}
+            name={item.name}
+            description={item.description}
+            price={item.price}
+          />
         ))}
       </div>
     </div>
