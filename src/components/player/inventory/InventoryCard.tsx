@@ -1,6 +1,8 @@
 import { InventoryItem } from "@/types/inventoryTypes";
-import { getRarityStyle, getRarityLabel, getRarityGlow } from "./RarityStyles";
+import { getRarityStyle } from "./RarityStyles";
 import handleEquipToggle from "./handleEquipToggle";
+import CustomButton2 from "./CustomButton2"; // Import CustomButton2 komponenty
+import RarityLabel from "@/components/ui/RarityLabel"; // Import nového komponentu RarityLabel
 
 export default function InventoryCard({ item, itemData }: { item: InventoryItem; itemData: any }) {
   return (
@@ -12,27 +14,18 @@ export default function InventoryCard({ item, itemData }: { item: InventoryItem;
       <h3 className="text-xl font-semibold">{itemData.name}</h3>
       <p className="text-sm text-gray-400">{itemData.description}</p>
 
-      {/* 🔷 Rarity Label with Neon Glow */}
-      <p className={`text-sm font-bold mt-2 px-4 py-1 rounded-full ${getRarityGlow(itemData.rarity)}`}>
-        {getRarityLabel(itemData.rarity)}
-      </p>
+      {/* Použitie nového RarityLabel komponentu */}
+      <RarityLabel rarity={itemData.rarity} />
 
       <div className="relative flex items-center justify-center mt-4">
-  <p className="credit-holo-text">
-    💰 {itemData.value ?? 0}
-  </p>
-</div>
+        <p className="credit-holo-text">💰 {itemData.value ?? 0}</p>
+      </div>
 
-      {/* 🚀 Sci-Fi Equip/Unequip Button */}
-      <button
-        className={`mt-4 px-6 py-2 rounded-full text-white font-bold tracking-wider
-                    transition-all duration-300 neon-button ${
-                      item.is_equipped ? "unequip-btn" : "equip-btn"
-                    }`}
-        onClick={() => handleEquipToggle(item.object_id)}
-      >
-        {item.is_equipped ? "UNEQUIP" : "EQUIP"}
-      </button>
+      {/* Použitie CustomButton2 komponenty */}
+      <CustomButton2
+        isEquipped={item.is_equipped}
+        onToggle={() => handleEquipToggle(item.object_id)} // Voláme funkciu na toggle vybavenia
+      />
     </div>
   );
 }

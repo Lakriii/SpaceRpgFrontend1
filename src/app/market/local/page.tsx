@@ -1,7 +1,5 @@
-"use client";
-
 import { mockLocalMarket } from "@/data/mockLocalMarket";
-import MarketItemCard from "@/components/market/MarketItemCard"; // Importujeme MarketItemCard
+import MarketItem from "@/components/market/MarketItem"; // Import MarketItem komponentu
 
 export default function LocalMarket() {
   if (!mockLocalMarket || !mockLocalMarket.items) {
@@ -20,13 +18,13 @@ export default function LocalMarket() {
       </p>
 
       <div className="mt-6 grid gap-6">
-        {/* Iterujeme cez položky a vykresľujeme každú pomocou MarketItemCard */}
         {mockLocalMarket.items.map((item) => (
-          <MarketItemCard
+          <MarketItem
             key={item.id}
             name={item.name}
             description={item.description}
             price={item.price}
+            rarity={item.rarity}  // Pridanie raritného prop-u
           />
         ))}
       </div>
