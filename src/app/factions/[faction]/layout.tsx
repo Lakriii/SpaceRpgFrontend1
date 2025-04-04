@@ -1,45 +1,37 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { mockFactions } from "@/data/mockFactions";
+import Sidebar from "@/components/layout/Sidebar"; // Import Sidebar
+import { mockFactions } from "@/data/mockFactions"; // Mocked data pre frakcie
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const params = useParams();
-  const selectedFaction = decodeURIComponent(params.faction || "");
+  const selectedFaction = decodeURIComponent(params.faction || ""); // Získanie názvu vybranej frakcie
+
+  // Vytvorenie dynamických odkazov pre frakcie
+  const factionLinks = mockFactions.map((f) => ({
+    href: `/factions/${encodeURIComponent(f.name)}`,
+    icon: "🏛", // Možno pridať ikony pre rôzne frakcie
+    label: f.name,
+  }));
+
+  // Podmienka na zobrazenie Back tlačidla
+  const showBackButton = selectedFaction !== ""; // Ak máme vybranú frakciu, zobrazí sa Back tlačidlo
 
   return (
     <div className="w-full min-h-screen flex bg-black text-white">
       {/* 🏛 Sidebar */}
-      <aside className="w-[300px] min-w-[250px] bg-gray-900 glassmorphism sci-fi-border p-6 flex-shrink-0">
-        <h2 className="text-xl font-bold neon-glow mb-4">Factions</h2>
-        <ul className="space-y-2">
-          {mockFactions.map((f) => (
-            <li key={f.name}>
-              <button
-                className={`w-full text-left px-4 py-2 rounded-lg transition-all ${
-                  f.name === selectedFaction ? "bg-blue-500 text-white" : "hover:bg-gray-800"
-                }`}
-                onClick={() => router.push(`/factions/${encodeURIComponent(f.name)}`)}
-              >
-                {f.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        {/* 🔙 Back Button */}
-        <button
-          className="mt-6 px-4 py-2 w-full rounded bg-red-500 hover:bg-red-600 font-bold tracking-wide transition-all"
-          onClick={() => router.push("/factions")}
-        >
-          ← Back to Factions Hub
-        </button>
-      </aside>
+      <Sidebar 
+        links={factionLinks} // Odkazy na frakcie
+        showBackButton={showBackButton}  // Dynamické zobrazenie Back tlačidla
+        backButtonText="← Back to Factions Hub"  // Text tlačidla
+        onBackClick={() => router.push("/factions")}  // Funkcia na návrat na hlavný hub
+      />
 
       {/* 🌌 Hlavný obsah */}
       <main className="flex-1 w-full p-8 glassmorphism sci-fi-border">
-        {children}
+        {children}  {/* Hlavný obsah stránky */}
       </main>
     </div>
   );
