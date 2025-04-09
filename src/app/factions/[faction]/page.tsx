@@ -1,14 +1,14 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { mockFactions } from "@/data/mockFactions"; // Predpokladáme, že existuje tento súbor s mockovanými frakciami
-import DiplomacyActions from "@/components/factions/DiplomacyActions"; // Predpokladáme, že tento komponent existuje
+import { mockFactions } from "@/data/mockFactions";
+import DiplomacyActions from "@/components/factions/DiplomacyActions";
+import FactionInfoCard from "@/components/factions/FactionInfoCard"; // <- nový import
 
 export default function FactionPage() {
   const { faction } = useParams();
   const factionData = mockFactions.find((f) => f.name === decodeURIComponent(faction));
 
-  // Ak frakcia neexistuje, zobraziť správu o chybe
   if (!factionData) {
     return (
       <div className="text-center text-2xl font-bold text-red-500 mt-20">
@@ -24,31 +24,36 @@ export default function FactionPage() {
       <p className="text-gray-400 text-center mt-2">{factionData.description}</p>
 
       <div className="mt-6 grid grid-cols-2 gap-4">
-        {/* Hlavné informácie o frakcii */}
-        <div className="glassmorphism p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-blue-400">🏛 Capital System</h3>
-          <p className="text-gray-300">{factionData.capital_system || "Unknown"}</p>
-        </div>
-        <div className="glassmorphism p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-green-400">🌍 Controlled Systems</h3>
-          <p className="text-gray-300">{factionData.controlled_systems.join(", ") || "None"}</p>
-        </div>
+        <FactionInfoCard
+          title="🏛 Capital System"
+          color="text-blue-400"
+          data={factionData.capital_system}
+          fallback="Unknown"
+        />
+        <FactionInfoCard
+          title="🌍 Controlled Systems"
+          color="text-green-400"
+          data={factionData.controlled_systems}
+          fallback="None"
+        />
       </div>
 
       {/* 🔄 Diplomacy Actions */}
       <DiplomacyActions faction={factionData} />
 
       <div className="mt-6 grid grid-cols-2 gap-4">
-        {/* Aliancie */}
-        <div className="glassmorphism p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-yellow-400">🤝 Allies</h3>
-          <p className="text-gray-300">{factionData.allies.join(", ") || "None"}</p>
-        </div>
-        {/* Nepátele */}
-        <div className="glassmorphism p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-red-400">⚔️ Enemies</h3>
-          <p className="text-gray-300">{factionData.enemies.join(", ") || "None"}</p>
-        </div>
+        <FactionInfoCard
+          title="🤝 Allies"
+          color="text-yellow-400"
+          data={factionData.allies}
+          fallback="None"
+        />
+        <FactionInfoCard
+          title="⚔️ Enemies"
+          color="text-red-400"
+          data={factionData.enemies}
+          fallback="None"
+        />
       </div>
     </div>
   );
