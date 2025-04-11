@@ -1,20 +1,25 @@
 "use client";
 
+import { useState } from "react";
+import { npcs, Npc } from "@/data/npcs";
+import NpcCard from "@/components/npc/NpcCard";
+import NpcModal from "@/components/npc/NpcModal";
+
 export default function NpcsPage() {
+  const [selectedNpc, setSelectedNpc] = useState<Npc | null>(null);
+
   return (
-    <div className="p-8 max-w-4xl mx-auto text-white">
+    <div className="p-8 max-w-5xl mx-auto text-white">
       <h1 className="text-4xl font-extrabold neon-glow text-center">👤 NPC Interaction</h1>
-      <p className="text-gray-400 text-center mt-2">Meet characters, accept quests, and negotiate deals.</p>
+      <p className="text-gray-400 text-center mt-2">Klikni na postavu a interaguj s ňou.</p>
 
-      <div className="mt-6 glassmorphism p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-blue-400">💬 Dialogue System</h3>
-        <p className="text-gray-300">Engage in interactive conversations with NPCs.</p>
+      <div className="mt-10 grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {npcs.map((npc) => (
+          <NpcCard key={npc.id} npc={npc} onClick={setSelectedNpc} />
+        ))}
       </div>
 
-      <div className="mt-4 glassmorphism p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-purple-400">📜 Quests</h3>
-        <p className="text-gray-300">Complete missions and earn rewards.</p>
-      </div>
+      {selectedNpc && <NpcModal npc={selectedNpc} onClose={() => setSelectedNpc(null)} />}
     </div>
   );
 }
