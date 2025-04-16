@@ -1,19 +1,124 @@
-"use client";
+// MiningPage.tsx
+'use client';
+
+import React, { useState, useEffect } from "react";
+import PreLaunchMinigame from "@/components/mining/PreLaunchMinigame";
+
+type Mission = {
+  id: number;
+  zone: string;
+  duration: number;
+  status: "pending" | "in-progress" | "complete";
+  log: string[];
+};
+
+let missionId = 0;
+
+const miningZones = ["🪐 Asteroid Belt", "🌋 Volcanic Moon", "🌌 Derelict Station"];
 
 export default function MiningPage() {
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [activeMission, setActiveMission] = useState<Mission | null>(null);
+  const [isMinigameActive, setIsMinigameActive] = useState(false);
+  const [pendingZone, setPendingZone] = useState<string | null>(null);
+  const [remainingTime, setRemainingTime] = useState<number | null>(null);
+
+  const initiateMission = (zone: string) => {
+    setIsMinigameActive(true);
+    setPendingZone(zone);
+  };
+
+  const handleMinigameSuccess = () => {
+    if (!pendingZone) return;
+
+    const zone = pendingZone;
+    const id = ++missionId;
+    const duration = Math.floor(Math.random() * 20) + 10;
+    const log = [`🛰 Launching mission to ${zone}`];
+    const newMission: Mission = {
+      id,
+      zone,
+      duration,
+      status: "in-progress",
+      log,
+    };
+
+    setMissions((prev) => [...prev, newMission]);
+    setActiveMission(newMission);
+    setIsMinigameActive(false);
+    setPendingZone(null);
+    setRemainingTime(duration);
+
+    const interval = setInterval(() => {
+      setRemainingTime((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(interval);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setTimeout(() => {
+      const success = Math.random() > 0.2;
+      const result = success
+        ? `✅ Successfully extracted rare minerals from ${zone}`
+        : `❌ Mission to ${zone} failed. Equipment lost.`;
+
+      const updatedMission = {
+        ...newMission,
+        status: "complete",
+        log: [...log, result],
+      };
+
+      setMissions((prev) =>
+        prev.map((m) => (m.id === id ? updatedMission : m))
+      );
+      setActiveMission(null);
+      setRemainingTime(null);
+    }, duration * 1000);
+  };
+
   return (
     <div className="p-8 max-w-4xl mx-auto text-white">
-      <h1 className="text-4xl font-extrabold neon-glow text-center">⛏ Mining Operations</h1>
-      <p className="text-gray-400 text-center mt-2">Extract valuable resources from asteroids and planets.</p>
+      <h1 className="text-4xl font-extrabold neon-glow text-center">⚙️ Tactical Mining</h1>
+      <p className="text-gray-400 text-center mt-2">Plan missions, send your team, and deal with the unknown.</p>
 
-      <div className="mt-6 glassmorphism p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-yellow-400">🚀 Resource Extraction</h3>
-        <p className="text-gray-300">Harvest minerals and trade for profit.</p>
+      {isMinigameActive && <PreLaunchMinigame onSuccess={handleMinigameSuccess} />}
+
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {miningZones.map((zone) => (
+          <div key={zone} className="glassmorphism p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-yellow-300">{zone}</h3>
+            <p className="text-sm text-gray-300">Estimated mission time: 10–30s</p>
+            <button
+              className="mt-2 px-4 py-2 bg-yellow-700 hover:bg-yellow-800 rounded"
+              onClick={() => initiateMission(zone)}
+              disabled={!!activeMission || isMinigameActive}
+            >
+              🚀 Launch Mission
+            </button>
+          </div>
+        ))}
       </div>
 
-      <div className="mt-4 glassmorphism p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-red-400">⚒ Mining Upgrades</h3>
-        <p className="text-gray-300">Improve efficiency with better drills and tools.</p>
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-white mb-2">📜 Mission Log</h2>
+        {missions.length === 0 && <p className="text-gray-500">No missions yet.</p>}
+        {missions.map((m) => (
+          <div key={m.id} className="glassmorphism p-3 rounded mb-2">
+            <h4 className="text-md font-semibold text-blue-400">
+              Mission #{m.id} to {m.zone}
+            </h4>
+            <p className="text-sm text-gray-400">Status: {m.status}</p>
+            <ul className="text-sm mt-1 space-y-1 text-gray-300">
+              {m.log.map((entry, i) => (
+                <li key={i}>{entry}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
     </div>
   );
