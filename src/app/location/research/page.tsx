@@ -1,55 +1,97 @@
-'use client';  // Toto je dôležité pre klientsku logiku
+'use client';
 
 import React from 'react';
-import Link from 'next/link';  // Importujeme Link z next/link
+import { techTreeNeuralSync } from '@/data/mockMokData';
+import * as Tooltip from '@radix-ui/react-tooltip';
+import Node from '@/components/research/Node';
 
-// Kategórie výskumu
-const researchCategories = [
-  {
-    title: "🧬 DNA Synth",
-    description: "Poskladaj genetickú sekvenciu a zlepši výskum.",
-    path: "research/games/dna-synth",
-  },
-  {
-    title: "⚙️ Core Calibration",
-    description: "Vyváž energetické systémy a urob výskum efektívnym.",
-    path: "research/games/core-calibration",
-  },
-  {
-    title: "💡 Neural Sync",
-    description: "Prepoji neurónové siete pre efektívnejší výskum.",
-    path: "research/games/neural-sync",
-  },
-  {
-    title: "🔬 Quantum Research",
-    description: "Preskúmaj kvantové funkcie a objav nové technológie.",
-    path: "research/games/quantum",
-  },
-  {
-    title: "⚡ Energy Research",
-    description: "Zvýš výkon vašich zariadení a optimalizuj energetické procesy.",
-    path: "research/games/energy",
-  },
-];
+const BasicResearchGrid = () => {
+  const gridSize = 9 * 9;
 
-const ResearchPage: React.FC = () => {
+  const createGrid = () => {
+    const gridItems = [];
+
+    techTreeNeuralSync.forEach((research) => {
+      const { x, y } = research.position;
+      gridItems.push({
+        x,
+        y,
+        name: research.name,
+        effect: research.description,
+        status: 'unlocked',
+        timeRequired: '',
+        sub: "no",
+      });
+    });
+
+    techTreeNeuralSync.forEach((level) => {
+      level.subResearch.forEach((research) => {
+        const { x, y } = research.position;
+        gridItems.push({
+          x,
+          y,
+          name: research.name,
+          effect: research.effect,
+          status: research.status,
+          timeRequired: research.timeRequired,
+          sub: "yes",
+        });
+      });
+    });
+
+    return gridItems;
+  };
+
+  const gridItems = createGrid();
+
   return (
-    <div className="research-page p-8 max-w-4xl mx-auto text-white">
-      <h1 className="text-4xl font-extrabold neon-glow text-center">🔬 Research Center</h1>
-      <p className="text-gray-400 text-center mt-2">Vyberte si výskumnú oblasť a začnite zlepšovať technológie!</p>
+    <div className="p-8 max-w-6xl mx-auto text-white min-w-[800px] min-h-[600px]">
+      <h1 className="text-4xl font-extrabold neon-glow text-center mb-6">🧠 Základný Výskum - Neural Sync</h1>
 
-      <div className="research-categories mt-6">
-        {researchCategories.map((category) => (
-          <Link key={category.title} href={category.path}>
-            <div className="research-category mt-4 glassmorphism p-4 rounded-lg cursor-pointer">
-              <h3 className="text-lg font-semibold text-orange-400">{category.title}</h3>
-              <p className="text-gray-300">{category.description}</p>
-            </div>
-          </Link>
-        ))}
+      {/* Kontajner pre mriežku */}
+      <div className="grid grid-cols-9 gap-[10px] justify-center items-center overflow-auto max-w-[1500px] mx-auto">
+        
+        {Array.from({ length: gridSize }, (_, index) => {
+          const gridItem = gridItems.find(item => item.x === index % 9 && item.y === Math.floor(index / 9));
+
+          return (
+            <Tooltip.Provider key={index}>
+              <Tooltip.Root delayDuration={100}>
+                <Tooltip.Trigger asChild>
+                  <div className="w-[164px] h-[180px] flex items-center justify-center min-w-0 flex-shrink-0 overflow-hidden">
+                    {gridItem ? (
+                      <Node
+                        name={gridItem.name}
+                        effect={gridItem.effect}
+                        status={gridItem.status}
+                        timeRequired={gridItem.timeRequired}
+                      />
+                    ) : (
+                      // Prázdne bunky s viditeľnou šírkou 10px
+                      <div className="w-[10px] h-[96px] border-2 border-red-500 bg-black/10" />
+                    )}
+                  </div>
+                </Tooltip.Trigger>
+
+                {gridItem && (
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className="bg-gray-900 text-white text-sm px-3 py-2 rounded shadow-xl max-w-[200px] text-center z-50"
+                      side="top"
+                      sideOffset={5}
+                    >
+                      {gridItem.effect}
+                      <Tooltip.Arrow className="fill-gray-900" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                )}
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-export default ResearchPage;
+export default BasicResearchGrid;
