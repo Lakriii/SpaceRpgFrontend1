@@ -13,11 +13,14 @@
     "@react-three/drei": "^10.0.4",
     "@react-three/fiber": "^9.1.0",
     "axios": "^1.8.4",
+    "better-sqlite3": "^11.9.1",
+    "drizzle-orm": "^0.43.1",
     "js-cookie": "^3.0.5",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.5.0",
+    "sqlite3": "^5.1.7",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
@@ -26,9 +29,19 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.0",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+
+"drizzle-kit": {
+  "schema": "./src/db/schema.ts",
+  "out": "./drizzle",
+  "driver": "better-sqlite",
+  "dbCredentials": {
+    "url": "src/db/database.db"
   }
+}
 }
