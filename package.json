@@ -6,9 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "db:migrate": "tsx lib/db/migrate.ts",
     "lint": "next lint"
   },
   "dependencies": {
+    "@libsql/client": "^0.15.4",
     "@radix-ui/react-tooltip": "^1.2.4",
     "@react-three/drei": "^10.0.4",
     "@react-three/fiber": "^9.1.0",
@@ -26,28 +28,15 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.0",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
-  },
-
-"drizzle-kit": {
-  "schema": "./src/db/schema.ts",
-  "out": "./drizzle",
-  "driver": "better-sqlite",
-  "dbCredentials": {
-    "url": "src/db/database.db"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   }
-}
-{
-  "scripts": {
-    "db:push": "drizzle-kit push:sqlite" // alebo push:pg pre PostgreSQL
-  }
-}
-
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { db } from "../../../../db";
-import { users } from "../../../../db/schema";
+import { db } from "../../../../lib/db/migrate";
+import { users } from "../../../../lib/db/schema";
 
 export async function POST(request: Request) {
   try {
