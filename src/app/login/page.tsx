@@ -3,27 +3,48 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Form from "@/components/ui/Form";
 
 // Polia formulára pre prihlásenie
 const formFields = [
-  { id: "username", label: "Username", type: "text" },
+  { id: "email", label: "Email", type: "email" },
   { id: "password", label: "Password", type: "password" },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleLogin = (formData: { [key: string]: string }) => {
-    const { username, password } = formData;
+  const handleLogin = async (formData: { [key: string]: string }) => {
+    const { email, password } = formData;
 
-    if (username.trim() && password.trim()) {
-      login(username, password);
-      router.push("/dashboard");
+    if (email.trim() && password.trim()) {
+      // Volanie API pre prihlásenie
+      try {
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          login(email); // Tu môžeš implementovať vlastnú logiku pre login
+          router.push("/dashboard");
+        } else {
+          setErrorMessage(data.message || "Login failed.");
+        }
+      } catch (error) {
+        setErrorMessage("An error occurred. Please try again later.");
+      }
     } else {
-      alert("Please fill in both username and password.");
+      setErrorMessage("Please fill in both email and password.");
     }
   };
 
@@ -32,6 +53,8 @@ export default function LoginPage() {
       <div className="glassmorphism p-10 rounded-xl w-full max-w-md shadow-lg">
         <h1 className="text-3xl font-bold text-center text-blue-400">Sign In</h1>
         <p className="text-center text-gray-400 mt-2">Log into your account</p>
+
+        {errorMessage && <p className="text-red-500 text-center">{errorMessage}</p>}
 
         {/* Použitie komponenty Form na zobrazenie polí a spracovanie formuláru */}
         <Form formFields={formFields} onSubmit={handleLogin} />

@@ -44,4 +44,10 @@
     "url": "src/db/database.db"
   }
 }
+{
+  "scripts": {
+    "db:push": "drizzle-kit push:sqlite" // alebo push:pg pre PostgreSQL
+  }
+}
+
 }

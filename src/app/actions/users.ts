@@ -1,7 +1,7 @@
 'use server';
 
-import { db } from '@/db';
-import { users } from '@/db/schema';
+import { db } from '../../../db';
+import { users } from '../../../db/schema';
 
 export async function getAllUsers() {
   return await db.select().from(users);

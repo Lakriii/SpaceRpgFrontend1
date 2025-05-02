@@ -1,4 +1,4 @@
-import drizzleInstance from '../../../db/schema';
+import drizzleInstance from '../../../../db/schema';
 import { User } from '@/modles/User';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { UserType } from '@/modles/User';
