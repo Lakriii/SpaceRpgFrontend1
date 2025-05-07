@@ -2,10 +2,11 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // Správne importovanie z next/navigation pre Next.js 13
 import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
-import Form from "@/components/ui/Form";
+import { useAuth } from "@/context/AuthContext"; // Predpokladám, že AuthContext poskytuje useAuth
+import Form from "@/components/ui/Form"; // Import formulára zo správneho adresára
+
 
 // Polia formulára pre prihlásenie
 const formFields = [

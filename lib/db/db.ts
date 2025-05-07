@@ -4,8 +4,7 @@ import { createClient } from '@libsql/client';
 
 // Vytvorte klienta pre SQLite databázu
 const client = createClient({
-  url: 'file:sqlite.db', // Lokálna SQLite databáza
-});
+    url: 'file:./lib/sqlite.db',});
 
 // Inicializujte Drizzle ORM s klientom
 export const db = drizzle(client);

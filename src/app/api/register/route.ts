@@ -1,8 +1,7 @@
-// src/app/api/register/route.ts
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { db } from "../../../../lib/db/db"; // Import správneho db klienta
-import { users } from "../../../../lib/db/schema";
+import { db } from "../../../../lib/db/db";
+import { users, players } from "../../../../lib/db/schema";
 
 export async function POST(request: Request) {
   try {
@@ -16,7 +15,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Skontroluj, či užívateľ s týmto e-mailom existuje
     const existingUser = await db
       .select()
       .from(users)
@@ -30,25 +28,56 @@ export async function POST(request: Request) {
       );
     }
 
-    // Vlož nového užívateľa do databázy (heslo bude uložené ako plaintext)
-    await db.insert(users).values({
-      name,
+    // Vlož používateľa a získaj ID
+    const insertedUsers = await db.insert(users).values({
       email,
-      password,  // Ulož plaintext heslo
-      createdAt: new Date().toISOString(),
+      password,
+    }).returning({ id: users.id });
+
+    const userId = insertedUsers[0]?.id;
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "Failed to create user" },
+        { status: 500 }
+      );
+    }
+
+    // Vytvor default player profil
+    await db.insert(players).values({
+      user_id: userId,
+      level: 1,
+      class_type: "Rookie",
+      hp: 100,
+      max_hp: 100,
+      energy: 50,
+      max_energy: 50,
+      stamina: 30,
+      strength: 10,
+      defense: 10,
+      agility: 10,
+      intelligence: 10,
+      luck: 5,
+      credits: 0,
+      experience: 0,
+      next_level_exp: 1000,
+      fights_won: 0,
+      fights_lost: 0,
+      missions_completed: 0,
+      missions_failed: 0,
+      equipped_weapon: "Basic Blaster",
+      equipped_armor: "Cloth Armor",
     });
 
     const response = NextResponse.json({
       success: true,
-      message: "User registered successfully",
+      message: "User registered and player profile created successfully",
     });
 
-    // Nastav cookie pre prihlásenie (voliteľné, ak chceš používateľa hneď prihlásiť)
     response.cookies.set("isAuthenticated", "true", {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24, // 1 deň
+      maxAge: 60 * 60 * 24,
     });
 
     return response;
