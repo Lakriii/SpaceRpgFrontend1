@@ -1,0 +1,7 @@
+-> nakoniec nie -> npm install bcrypt (do buducna)
+
+plus global instal tsx
+
+npx drizzle-kit generate
+
+npx drizzle-kit migrate

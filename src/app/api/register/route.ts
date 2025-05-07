@@ -1,8 +1,7 @@
-// pages/api/register.ts
-
+// src/app/api/register/route.ts
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { db } from "../../../../lib/db/migrate";
+import { db } from "../../../../lib/db/db"; // Import správneho db klienta
 import { users } from "../../../../lib/db/schema";
 
 export async function POST(request: Request) {
@@ -27,17 +26,16 @@ export async function POST(request: Request) {
     if (existingUser.length > 0) {
       return NextResponse.json(
         { success: false, message: "User with this email already exists" },
-        { status: 409 } // Conflict
+        { status: 409 }
       );
     }
 
-    // Vlož nového užívateľa do databázy
+    // Vlož nového užívateľa do databázy (heslo bude uložené ako plaintext)
     await db.insert(users).values({
       name,
       email,
-      password,  // Ulož aj password (zabezpeč, že je zahashovaný v reálnom svete)
-      created_at: new Date().toISOString(),  // Explicitné nastavenie, ak to nie je automatické
-      updated_at: new Date().toISOString(),
+      password,  // Ulož plaintext heslo
+      createdAt: new Date().toISOString(),
     });
 
     const response = NextResponse.json({
