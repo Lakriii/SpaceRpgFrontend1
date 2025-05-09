@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "db:migrate": "tsx lib/db/migrate.ts",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "ts-node drizzle/seed.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.15.4",
