@@ -1,51 +1,33 @@
+// src/app/dashboard/page.tsx
 "use client";
 
-
 import { useEffect, useState } from "react";
-import { db } from "@lib/db/db"; 
-import { players } from "@lib/db/schema";
-import CaptainPanel from "@/components/player/CaptainPanel";
-import CombatPanel from "@/components/player/CombatPanel";
+import { useAuth } from "@/context/AuthContext";
+import PlayerDashboard from "@/components/player/PlayerDashboard";
 
-function Profile() {
-  const [player, setPlayer] = useState<any | null>(null); 
-  const userId = 1; 
+export default function DashboardPage() {
+  const { user, loading } = useAuth();
+  const [player, setPlayer] = useState<any | null>(null);
 
   useEffect(() => {
-    const fetchPlayerData = async () => {
-      try {
-        const result = await db.select().from(players).where(players.user_id.eq(userId)).limit(1);
-        if (result.length > 0) {
-          setPlayer(result[0]); 
-        } else {
-          console.log("No player data found for the given user ID.");
-        }
-      } catch (error) {
-        console.error("Error fetching player data:", error);
+    const fetchPlayer = async () => {
+      if (user) {
+        const res = await fetch(`/api/player?userId=${user.id}`);
+        const data = await res.json();
+        setPlayer(data);
       }
     };
 
-    fetchPlayerData();
-  }, [userId]); 
+    fetchPlayer();
+  }, [user]);
 
-  if (!player) {
-    return (
-      <div className="w-full max-w-6xl mx-auto glassmorphism p-6 sm:p-10 rounded-xl shadow-lg">
-        <h1 className="text-4xl font-bold neon-glow mb-8 text-center">Loading...</h1>
-      </div>
-    );
+  if (loading) {
+    return <div className="text-center mt-10">Loading auth...</div>;
   }
 
-  return (
-    <div className="w-full max-w-6xl mx-auto glassmorphism p-6 sm:p-10 rounded-xl shadow-lg">
-      <h1 className="text-4xl font-bold neon-glow mb-8 text-center">Captain's Overview</h1>
+  if (!user) {
+    return <div className="text-center text-red-500 mt-10">You must be logged in to view this page.</div>;
+  }
 
-      <div className="flex flex-col md:flex-row gap-8">
-        <CaptainPanel player={player} />
-        <CombatPanel player={player} />
-      </div>
-    </div>
-  );
+  return <PlayerDashboard player={player} />;
 }
-
-export default Profile;    

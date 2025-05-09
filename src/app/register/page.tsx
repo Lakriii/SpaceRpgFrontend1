@@ -37,7 +37,7 @@ export default function RegisterPage() {
         const data = await response.json();
 
         if (data.success) {
-          login(username); // Tu môžeš implementovať vlastnú logiku pre login po registrácii
+          await login(email, password);  // Tu môžeš implementovať vlastnú logiku pre login po registrácii
           router.push("/dashboard");
         } else {
           setErrorMessage(data.message || "Registration failed.");

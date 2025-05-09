@@ -36,7 +36,7 @@ export default function LoginPage() {
         const data = await response.json();
 
         if (data.success) {
-          login(email); // Tu môžeš implementovať vlastnú logiku pre login
+          await login(email, password); // ✅
           router.push("/dashboard");
         } else {
           setErrorMessage(data.message || "Login failed.");

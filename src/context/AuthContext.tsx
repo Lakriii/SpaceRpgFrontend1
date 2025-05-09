@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       setError("Failed to log in. Please check your credentials.");
       console.error(err);
+      console.error("❌ Login error:", err.response?.data || err.message);
     }
   };
 
