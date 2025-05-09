@@ -55,13 +55,20 @@ export async function POST(request: Request) {
       },
     });
 
-    // Nastavenie cookie pre klienta
-    response.cookies.set("isAuthenticated", "true", {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24, // 1 deň
-    });
+    // Nastavenie cookies pre klienta
+response.cookies.set("isAuthenticated", "true", {
+  httpOnly: true,
+  sameSite: "lax",
+  path: "/",
+  maxAge: 60 * 60 * 24, // 1 deň
+});
+
+response.cookies.set("userId", user.id.toString(), {
+  httpOnly: true,
+  sameSite: "lax",
+  path: "/",
+  maxAge: 60 * 60 * 24, // 1 deň
+});
 
     return response;
   } catch (error) {
