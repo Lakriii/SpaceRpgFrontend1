@@ -1,14 +1,29 @@
-import { mockLocalMarket } from "@/data/mockLocalMarket";
-import MarketItem from "@/components/market/MarketItem"; // Import MarketItem komponentu
+'use client';
 
-export default function LocalMarket() {
-  if (!mockLocalMarket || !mockLocalMarket.items) {
-    return (
-      <div className="text-center text-red-500 text-xl font-bold mt-10">
-        ⚠️ No market data available.
-      </div>
-    );
-  }
+// app/market/local/page.tsx
+import { getMarketItemsByType } from "@lib/market/getMarketItems"; // Importing Drizzle ORM function
+import { useState } from "react";
+import  buyItem  from "../../api/market/buyItem";
+import toast from "react-hot-toast";
+import MarketItem from "@/components/market/MarketItem";
+
+
+export default async function LocalMarket({ playerId }) {
+  const items = await getMarketItemsByType("local");
+
+  const [playerCredits, setPlayerCredits] = useState(1000); // Starting with 1000 credits
+
+  const handleBuy = async (itemId: number, price: number) => {
+    try {
+      const response = await buyItem(playerId, itemId, price); // Handle the item purchase logic
+      if (response.success) {
+        setPlayerCredits((prevCredits) => prevCredits - price); // Update credits
+        toast.success("✅ Purchase successful!");
+      }
+    } catch (error) {
+      toast.error(error.message || "❌ Purchase failed.");
+    }
+  };
 
   return (
     <div className="p-8 max-w-4xl mx-auto text-white">
@@ -18,13 +33,15 @@ export default function LocalMarket() {
       </p>
 
       <div className="mt-6 grid gap-6">
-        {mockLocalMarket.items.map((item) => (
+        {items.map((entry) => (
           <MarketItem
-            key={item.id}
-            name={item.name}
-            description={item.description}
-            price={item.price}
-            rarity={item.rarity}  // Pridanie raritného prop-u
+            key={entry.id}
+            name={entry.name}
+            description={entry.description}
+            price={entry.price}
+            rarity={entry.rarity}
+            playerCredits={playerCredits}
+            onBuy={() => handleBuy(entry.id, entry.price)}
           />
         ))}
       </div>
