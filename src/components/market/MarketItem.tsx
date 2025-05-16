@@ -1,3 +1,5 @@
+'use client';
+
 // src/components/market/MarketItem.tsx
 import React from "react";
 

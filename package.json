@@ -9,7 +9,7 @@
     "start": "next start",
     "db:migrate": "tsx lib/db/migrate.ts",
     "lint": "next lint",
-    "seed": "ts-node drizzle/seed.ts"
+    "seed": "npx tsx drizzle/seed.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.15.6",

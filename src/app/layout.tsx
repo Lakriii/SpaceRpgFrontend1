@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Orbitron } from "next/font/google";
 import "@/styles/globals.css";
 import Navbar from "@/components/layout/Navbar";
-import { AuthProvider } from "@/context/AuthContext"; // Importuj AuthProvider
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "react-hot-toast";  // <-- pridaj import
 
 const orbitron = Orbitron({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -13,10 +14,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    
-      <html lang="sk" className={orbitron.className}>
-        <body className="flex flex-col min-h-screen bg-black text-white relative">
-        <AuthProvider> {/* Obalíme aplikáciu v AuthProvider */}
+    <html lang="sk" className={orbitron.className}>
+      <body className="flex flex-col min-h-screen bg-black text-white relative">
+        <AuthProvider>
           {/* 🌌 Deep Space Background */}
           <div className="fixed inset-0 bg-stars animate-fadeIn"></div>
 
@@ -37,13 +37,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
 
+          {/* Toaster pre toast správy */}
+          <Toaster position="top-right" />
+
           {/* 🛸 Footer (Hidden unless needed) */}
           <footer className="w-full text-center text-gray-400 py-4 bg-gray-900 glassmorphism border-t border-gray-800 mt-auto">
             <p>© 2025 Sci-Fi RPG. All rights reserved.</p>
             <p className="text-sm">Developed with 🚀 by Space Dev Team</p>
           </footer>
-          </AuthProvider> 
-        </body>
-      </html>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }

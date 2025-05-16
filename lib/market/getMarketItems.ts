@@ -1,7 +1,24 @@
-// lib/market/getMarketItems.ts
-import { db } from "@lib/db/db"; // Import the Drizzle instance
+import { db } from "@lib/db/db";
+import { marketItems, items } from "@lib/db/schema";
+import { eq } from "drizzle-orm"; // Dôležité!
 
 export const getMarketItemsByType = async (type: string) => {
-  const items = await db.select().from("market_items").where("market_type", "=", type); // Adjust table and column names as needed
-  return items;
+  const result = await db
+    .select({
+      marketItemId: marketItems.id,
+      price: marketItems.price,
+      deliveryTime: marketItems.delivery_time,
+      location: marketItems.location,
+      itemId: items.id,
+      name: items.name,
+      description: items.description,
+      value: items.value,
+      rarity: items.rarity,
+      contentType: items.content_type,
+    })
+    .from(marketItems)
+    .innerJoin(items, eq(marketItems.item_id, items.id)) // Opravené
+    .where(eq(marketItems.market_type, type)); // Opravené
+
+  return result;
 };

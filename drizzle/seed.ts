@@ -32,7 +32,7 @@ async function seed() {
     agility: 10,
     intelligence: 10,
     luck: 5,
-    credits: 1000,
+    credits: 1000000,
     experience: 0,
     next_level_exp: 1000,
     fights_won: 0,
