@@ -184,3 +184,47 @@ export const marketItemsRelations = relations(marketItems, ({ one }) => ({
     references: [items.id],
   }),
 }));
+
+export const researchNodes = sqliteTable("research_nodes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  parent_id: integer("parent_id").references(() => researchNodes.id), // pre hierarchiu
+  name: text("name").notNull(),
+  level: integer("level").notNull(),
+  description: text("description").notNull(),
+  x: integer("x").notNull(),
+  y: integer("y").notNull(),
+});
+
+export const playerResearch = sqliteTable("player_research", {
+  player_id: integer("player_id")
+    .notNull()
+    .references(() => players.id, { onDelete: "cascade" }),
+
+  research_node_id: integer("research_node_id")
+    .notNull()
+    .references(() => researchNodes.id, { onDelete: "cascade" }),
+
+  status: text("status").notNull().default("locked"), // locked | in_progress | completed
+  started_at: integer("started_at"), // timestamp (voliteľne)
+  completed_at: integer("completed_at"), // timestamp (voliteľne)
+});
+
+export const researchNodesRelations = relations(researchNodes, ({ one, many }) => ({
+  parent: one(researchNodes, {
+    fields: [researchNodes.parent_id],
+    references: [researchNodes.id],
+  }),
+  children: many(researchNodes),
+  playerResearch: many(playerResearch),
+}));
+
+export const playerResearchRelations = relations(playerResearch, ({ one }) => ({
+  player: one(players, {
+    fields: [playerResearch.player_id],
+    references: [players.id],
+  }),
+  researchNode: one(researchNodes, {
+    fields: [playerResearch.research_node_id],
+    references: [researchNodes.id],
+  }),
+}));
