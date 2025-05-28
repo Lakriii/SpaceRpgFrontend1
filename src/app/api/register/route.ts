@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     const insertedUsers = await db.insert(users).values({
       email,
       password,
+      username: name,
     }).returning({ id: users.id });
 
     const userId = insertedUsers[0]?.id;

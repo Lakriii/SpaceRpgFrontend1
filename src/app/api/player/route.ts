@@ -1,6 +1,6 @@
 // src/app/api/player/route.ts
 import { db } from "@lib/db/db";
-import { players } from "@lib/db/schema";
+import { players, users } from "@lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -13,8 +13,12 @@ export async function GET(req: Request) {
   }
 
   const result = await db
-    .select()
+    .select({
+      ...players,
+      username: users.username, 
+    })
     .from(players)
+    .innerJoin(users, eq(players.user_id, users.id))
     .where(eq(players.user_id, userId))
     .limit(1);
 
