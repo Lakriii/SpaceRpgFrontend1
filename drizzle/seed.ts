@@ -7,7 +7,7 @@ import {
   playerAchievements,
   items,
   marketItems,
-} from "../lib/db/schema.ts"; // uprav podľa tvojej štruktúry
+} from "../lib/db/schema"; 
 import { eq } from "drizzle-orm";
 
 async function seed() {
@@ -15,6 +15,7 @@ async function seed() {
 
   await db.insert(users).values({
     email: "test@seed.com",
+    username: "test",
     password: "test123", // môžeš použiť bcrypt neskôr
   });
   
