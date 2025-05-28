@@ -1,4 +1,6 @@
 import BaseLayout from "@/components/layout/BaseLayout";
+import ProtectedPage from "@/components/auth/ProtectedPage";
+
 
 const locationLinks = [
   { href: "/location", icon: "🏛", label: "Overview" },
@@ -10,8 +12,10 @@ const locationLinks = [
 
 export default function CurrentLocationLayout({ children }: { children: React.ReactNode }) {
   return (
-    <BaseLayout header="📍 Current Location" sidebarLinks={locationLinks}>
-      {children}
-    </BaseLayout>
+    <ProtectedPage>
+      <BaseLayout header="📍 Current Location" sidebarLinks={locationLinks}>
+       {children}
+      </BaseLayout>
+    </ProtectedPage>
   );
 }

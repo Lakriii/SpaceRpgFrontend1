@@ -1,4 +1,7 @@
+"use client";
+
 import BaseLayout from "@/components/layout/BaseLayout";
+import ProtectedPage from "@/components/auth/ProtectedPage";
 
 const dashboardLinks = [
   { href: "/dashboard", icon: "🏠", label: "Dashboard" },
@@ -9,8 +12,10 @@ const dashboardLinks = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <BaseLayout header="📊 Your Dashboard" sidebarLinks={dashboardLinks}>
-      {children}
-    </BaseLayout>
+    <ProtectedPage>
+      <BaseLayout header="📊 Your Dashboard" sidebarLinks={dashboardLinks}>
+        {children}
+      </BaseLayout>
+    </ProtectedPage>
   );
 }

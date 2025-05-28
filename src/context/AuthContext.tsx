@@ -15,6 +15,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -25,49 +26,50 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // Pridanie stavu pre chyby
+  const [error, setError] = useState<string | null>(null);
 
-  // Načítanie aktuálneho používateľa pri prvom načítaní komponentu
+  // Načítanie používateľa po načítaní stránky
   useEffect(() => {
     axios
-      .get("/api/me")
-      .then((res) => setUser(res.data))
+      .get("/api/me", { withCredentials: true }) // ✅ cookie potrebná
+      .then((res) => setUser(res.data))          // ✅ res.data JE objekt User
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 
-  // Prihlásenie používateľa
+  // Prihlásenie
   const login = async (email: string, password: string) => {
     try {
       await axios.post("/api/login", { email, password }, { withCredentials: true });
-      const res = await axios.get("/api/me");
-      setUser(res.data); // Uloženie používateľa do stavu
-    } catch (err) {
+      const res = await axios.get("/api/me", { withCredentials: true });
+      setUser(res.data);
+      setError(null); // reset chýb
+    } catch (err: any) {
       setError("Failed to log in. Please check your credentials.");
-      console.error(err);
-      console.error("❌ Login error:", err.response?.data || err.message);
+      console.error("❌ Login error:", err?.response?.data || err.message);
     }
   };
 
-  // Odhlásenie používateľa
+  // Odhlásenie
   const logout = async () => {
     try {
       await axios.post("/api/logout", {}, { withCredentials: true });
-      setUser(null); // Vymazanie používateľa
-    } catch (err) {
+      setUser(null);
+      setError(null);
+    } catch (err: any) {
       setError("Failed to log out.");
-      console.error(err);
+      console.error("❌ Logout error:", err?.response?.data || err.message);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook na získanie prístupu k autentifikačnému kontextu
+// Hook na získanie kontextu
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used within AuthProvider");

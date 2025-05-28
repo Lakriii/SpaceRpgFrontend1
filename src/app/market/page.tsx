@@ -1,6 +1,8 @@
 "use client";
 
 import MarketCard from "@/components/market/MarketCard";
+import ProtectedPage from "@/components/auth/ProtectedPage";
+
 
 const markets = [
   {
@@ -28,6 +30,7 @@ const markets = [
 
 export default function MarketPage() {
   return (
+    <ProtectedPage>
     <div className="p-8 max-w-5xl mx-auto text-white">
       <h1 className="text-4xl font-extrabold neon-glow text-center">🛒 Intergalactic Market</h1>
       <p className="text-gray-400 text-center mt-2">
@@ -40,5 +43,6 @@ export default function MarketPage() {
         ))}
       </div>
     </div>
+    </ProtectedPage>
   );
 }
