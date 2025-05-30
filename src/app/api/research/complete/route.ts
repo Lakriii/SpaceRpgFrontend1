@@ -1,56 +1,107 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { db } from "@lib/db/db";
+import { eq, and } from "drizzle-orm";
+import { playerResearch, researchNodes, players } from "@lib/db/schema";
+import { NextResponse } from "next/server";
 
-// Tu by si mal mať prístup k DB - tu len simulujeme
-let researchDB = [
-  // Tu simuluj svoju štruktúru dát so stavmi, podobne ako researchData na klientovi
-];
+export async function POST(req: Request) {
+  try {
+    const { id, userId } = await req.json();
 
-// Funkcia na aktualizáciu statusu a odomknutie ďalšieho
-function completeResearch(id: number) {
-  // Nájde výskum a označí ako completed
-  // Odomkne ďalší podľa parent_id (príklad logiky)
-  let updated = false;
-
-  researchDB = researchDB.map((node) => {
-    if (node.id === id) {
-      node.status = 'completed';
-      updated = true;
+    if (!id || !userId) {
+      console.error("❌ Missing id or userId in request body", id, userId);
+      return NextResponse.json({ message: "Invalid data" }, { status: 400 });
     }
-    if (updated && node.parent_id === id && node.status === 'locked') {
-      node.status = 'unlocked';
+
+    console.log("📥 Výskum ID:", id, "od používateľa ID:", userId);
+
+    // Získame player_id
+    const playerResult = await db
+      .select()
+      .from(players)
+      .where(eq(players.user_id, Number(userId)))
+      .limit(1)
+      .then(rows => rows[0]);
+
+    if (!playerResult) {
+      console.error("❌ Player not found");
+      return NextResponse.json({ message: "Player not found" }, { status: 404 });
     }
-    // aktualizuj aj subResearch ak treba
-    if (node.subResearch) {
-      node.subResearch = node.subResearch.map((sub: any) => {
-        if (sub.id === id) {
-          sub.status = 'completed';
-          updated = true;
-        }
-        if (updated && sub.parent_id === id && sub.status === 'locked') {
-          sub.status = 'unlocked';
-        }
-        return sub;
+
+    const playerId = playerResult.id;
+
+    // Skontrolujeme existujúci záznam pre tento research node
+    const existingResearch = await db
+      .select()
+      .from(playerResearch)
+      .where(and(
+        eq(playerResearch.player_id, playerId),
+        eq(playerResearch.research_node_id, id)
+      ))
+      .limit(1)
+      .then(rows => rows[0]);
+
+    if (!existingResearch) {
+      // Ak záznam neexistuje, vložíme nový completed
+      await db.insert(playerResearch).values({
+        player_id: playerId,
+        research_node_id: id,
+        status: "completed",
+        completed_at: Date.now(),
       });
+      console.log("✅ Pridaný nový completed research.");
+    } else if (existingResearch.status === 'unlocked') {
+      // Ak existuje unlocked, aktualizujeme na completed
+      await db
+        .update(playerResearch)
+        .set({ status: "completed", completed_at: Date.now() })
+        .where(and(
+          eq(playerResearch.player_id, playerId),
+          eq(playerResearch.research_node_id, id)
+        ));
+      console.log("✅ Updatnutý unlocked na completed.");
+    } else {
+      console.log("✅ Výskum už bol completed, preskakujem.");
     }
-    return node;
-  });
 
-  return researchDB;
-}
+    // Odomknutie detí (rovnaká logika ako predtým)
+    const children = await db
+      .select({ id: researchNodes.id })
+      .from(researchNodes)
+      .where(eq(researchNodes.parent_id, id));
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ message: 'Method not allowed' });
-    return;
+    for (const child of children) {
+      const existingChild = await db
+        .select()
+        .from(playerResearch)
+        .where(and(
+          eq(playerResearch.player_id, playerId),
+          eq(playerResearch.research_node_id, child.id)
+        ))
+        .limit(1)
+        .then(rows => rows[0]);
+
+      if (!existingChild) {
+        await db.insert(playerResearch).values({
+          player_id: playerId,
+          research_node_id: child.id,
+          status: "unlocked",
+          completed_at: null,
+        });
+        console.log(`✅ Sub-research ${child.id} odomknutý.`);
+      } else {
+        console.log(`✅ Sub-research ${child.id} už existuje, preskakujem insert.`);
+      }
+    }
+
+    const updatedResearch = await db
+      .select()
+      .from(playerResearch)
+      .where(eq(playerResearch.player_id, playerId));
+
+    console.log("✅ Výskum aktualizovaný");
+    return NextResponse.json(updatedResearch);
+  } catch (error) {
+    console.error("❌ Server error:", error);
+    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
-
-  const { id } = req.body;
-  if (typeof id !== 'number') {
-    res.status(400).json({ message: 'Invalid id' });
-    return;
-  }
-
-  const updatedData = completeResearch(id);
-
-  res.status(200).json(updatedData);
 }

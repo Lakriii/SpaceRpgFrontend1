@@ -5,24 +5,44 @@ import ResearchGrid from '@/components/research/ResearchGrid';
 import ResearchPanel from '@/components/research/ResearchPanel';
 import Notification from '@/components/research/Notification';
 import { ResearchNode, SubResearch } from '@/types/research';
+import { useAuth } from '@/context/AuthContext';
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [researchData, setResearchData] = useState<ResearchNode[]>([]);
   const [selectedResearch, setSelectedResearch] = useState<SubResearch | ResearchNode | null>(null);
   const [notification, setNotification] = useState('');
 
-  useEffect(() => {
-    async function fetchResearch() {
-      try {
-        const res = await fetch('/api/research');
-        const data: ResearchNode[] = await res.json();
-        setResearchData(data);
-      } catch (error) {
-        console.error('Failed to fetch research data:', error);
+  // ✅ Upravené fetchResearch, teraz posielame userId
+  async function fetchResearch() {
+    try {
+      if (!user?.id) {
+        console.error("❌ Missing userId, skipping research fetch.");
+        return;
       }
+
+      const res = await fetch(`/api/research?userId=${user.id}`);
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        console.error("❌ Invalid research data received:", data);
+        setResearchData([]);
+        return;
+      }
+
+      setResearchData(data);
+      console.log("fetchResearch:", data);
+    } catch (error) {
+      console.error('Failed to fetch research data:', error);
     }
-    fetchResearch();
-  }, []);
+  }
+
+  // ✅ Voláme fetchResearch len ak máme userId k dispozícii
+  useEffect(() => {
+    if (user?.id) {
+      fetchResearch();
+    }
+  }, [user]);
 
   const showNotification = (msg: string) => {
     setNotification(msg);
@@ -30,27 +50,27 @@ export default function HomePage() {
   };
 
   const handleStartResearch = async (research: any) => {
+    if (research.status !== 'unlocked') {
+      showNotification('❌ Tento výskum nie je možné spustiť.');
+      return;
+    }
+
+    console.log("Spúšťam výskum:", research);
     showNotification('🧪 Výskum spustený!');
     setSelectedResearch(null);
 
-    // Simuluj čas výskumu 5 sekúnd
     setTimeout(async () => {
       showNotification('✅ Výskum dokončený!');
 
-      // Zavolaj API na uloženie stavu dokončeného výskumu
       try {
         const response = await fetch('/api/research/complete', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id: research.id }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: Number(research.id), userId: user?.id }),
         });
+
         if (response.ok) {
-          // Aktualizuj lokálny stav, aby sa odomkol ďalší výskum
-          // Tu treba aktualizovať researchData s novými stavmi zo servera
-          const updatedData = await response.json();
-          setResearchData(updatedData);
+          await fetchResearch();
         } else {
           showNotification('❌ Chyba pri ukladaní výskumu.');
         }
