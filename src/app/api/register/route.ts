@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "../../../../lib/db/db";
 import { users, players } from "../../../../lib/db/schema";
+import { playerResearch } from '../../../../lib/db/schema/research'; // uprav podľa cesty
 
 export async function POST(request: Request) {
   try {
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     // Vytvor default player profil
-    await db.insert(players).values({
+    const insertedPlayers = await db.insert(players).values({
       user_id: userId,
       level: 1,
       class_type: "Rookie",
@@ -67,11 +68,37 @@ export async function POST(request: Request) {
       missions_failed: 0,
       equipped_weapon: "Basic Blaster",
       equipped_armor: "Cloth Armor",
-    });
+    }).returning({ id: players.id });
+
+    const playerId = insertedPlayers[0]?.id;
+    if (!playerId) {
+      return NextResponse.json(
+        { success: false, message: "Failed to create player profile" },
+        { status: 500 }
+      );
+    }
+
+    // ID hlavných uzlov výskumu, ktoré chceme odomknúť pri registrácii
+    const basicResearchNodeIds = [1, 5, 9, 13, 17]; // podľa tvojich seed dát
+
+    const now = Date.now();
+
+    // Vložíme základné výskumy ako completed (alebo podľa potreby iný status)
+    await Promise.all(
+  basicResearchNodeIds.map((researchNodeId) =>
+    db.insert(playerResearch).values({
+      player_id: playerId,
+      research_node_id: researchNodeId,
+      status: "unlocked",    // alebo "available", podľa tvojho systému
+      started_at: null,
+      completed_at: null,
+    })
+  )
+);
 
     const response = NextResponse.json({
       success: true,
-      message: "User registered and player profile created successfully",
+      message: "User registered, player profile created and basic research unlocked successfully",
     });
 
     response.cookies.set("isAuthenticated", "true", {

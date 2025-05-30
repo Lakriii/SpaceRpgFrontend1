@@ -21,7 +21,7 @@
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
     "better-sqlite3": "^11.9.1",
-    "drizzle-orm": "^0.43.1",
+    "drizzle-orm": "^0.44.1",
     "js-cookie": "^3.0.5",
     "next": "^15.3.0",
     "react": "^19.0.0",
