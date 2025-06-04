@@ -1,6 +1,5 @@
 'use client';
 
-
 import { useState, useEffect } from 'react';
 
 type Mission = {
@@ -11,6 +10,8 @@ type Mission = {
   log: string[];
   risk: 'low' | 'medium' | 'high';
   reward: number;
+  nodeId?: number;  // pridávam nodeId pre zaslanie na API
+  yieldAmount?: number; // koľko suroviny získal hráč
 };
 
 type Resource = {
@@ -23,28 +24,34 @@ let missionId = 0;
 
 export const miningZones = [
   {
+    id: 1,
     name: '🪐 Asteroid Belt',
     description: 'Rich in common metals and crystals',
     risk: 'low' as const,
     baseReward: 100,
     color: 'from-blue-600 to-purple-700',
-    icon: '🪐'
+    icon: '🪐',
+    yieldAmount: 10
   },
   {
+    id: 2,
     name: '🌋 Volcanic Moon',
     description: 'Dangerous but rich in rare minerals',
     risk: 'medium' as const,
     baseReward: 250,
     color: 'from-orange-600 to-red-700',
-    icon: '🌋'
+    icon: '🌋',
+    yieldAmount: 25
   },
   {
+    id: 3,
     name: '🌌 Derelict Station',
     description: 'Unknown dangers, legendary rewards',
     risk: 'high' as const,
     baseReward: 500,
     color: 'from-purple-600 to-pink-700',
-    icon: '🌌'
+    icon: '🌌',
+    yieldAmount: 50
   }
 ];
 
@@ -83,8 +90,8 @@ export function useMining(playerId: string | undefined) {
     setPendingZone(zone);
   };
 
-  const handleMinigameSuccess = () => {
-    if (!pendingZone) return;
+  const handleMinigameSuccess = async () => {
+    if (!pendingZone || !playerId) return;
 
     const zone = pendingZone;
     const id = ++missionId;
@@ -97,7 +104,9 @@ export function useMining(playerId: string | undefined) {
       status: 'in-progress',
       log,
       risk: zone.risk,
-      reward: zone.baseReward
+      reward: zone.baseReward,
+      nodeId: zone.id,
+      yieldAmount: zone.yieldAmount
     };
 
     setMissions((prev) => [...prev, newMission]);
@@ -116,7 +125,7 @@ export function useMining(playerId: string | undefined) {
       });
     }, 1000);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const success = Math.random() > (zone.risk === 'high' ? 0.4 : zone.risk === 'medium' ? 0.2 : 0.1);
       const reward = success ? zone.baseReward + Math.floor(Math.random() * 100) : 0;
 
@@ -135,13 +144,40 @@ export function useMining(playerId: string | undefined) {
       setRemainingTime(null);
 
       if (success) {
-        setCredits(prev => prev + reward);
-        setExperience(prev => prev + Math.floor(reward / 2));
+        // Pošleme výsledky na API, aby sa uložili do profilu
+        const miningResults = [
+          {
+            miningNodeId: zone.id,
+            quantity: zone.yieldAmount
+          }
+        ];
 
-        fetch(`/api/player/resources?playerId=${playerId}`)
-          .then(res => res.json())
-          .then(data => setResources(data))
-          .catch(console.error);
+        try {
+          const res = await fetch('/api/mining/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              playerId,
+              credits: reward,
+              experience: Math.floor(reward / 2),
+              miningResults
+            })
+          });
+
+          if (!res.ok) {
+            throw new Error('Failed to save mining results');
+          }
+
+          // Aktualizuj lokálny stav z API, aby mal aktuálne resources, credits, xp
+          const updatedPlayerRes = await fetch(`/api/player/resources?playerId=${playerId}`).then(r => r.json());
+          setResources(updatedPlayerRes);
+
+          const updatedPlayerStatus = await fetch(`/api/player/status?playerId=${playerId}`).then(r => r.json());
+          setCredits(updatedPlayerStatus.credits);
+          setExperience(updatedPlayerStatus.experience);
+        } catch (err) {
+          console.error('Error saving mining results:', err);
+        }
       }
     }, duration * 1000);
   };
