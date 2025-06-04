@@ -1,27 +1,53 @@
-// MiningPage.tsx
 'use client';
 
-import React, { useState, useEffect } from "react";
-import PreLaunchMinigame from "@/components/mining/PreLaunchMinigame";
+import React, { useState, useEffect } from 'react';
+import PreLaunchMinigame from '@/components/mining/PreLaunchMinigame';
+import { useAuth } from '@/context/AuthContext';
 
 type Mission = {
   id: number;
   zone: string;
   duration: number;
-  status: "pending" | "in-progress" | "complete";
+  status: 'pending' | 'in-progress' | 'complete';
   log: string[];
+};
+
+type Resource = {
+  miningNodeName: string;
+  quantity: number;
 };
 
 let missionId = 0;
 
-const miningZones = ["🪐 Asteroid Belt", "🌋 Volcanic Moon", "🌌 Derelict Station"];
+const miningZones = ['🪐 Asteroid Belt', '🌋 Volcanic Moon', '🌌 Derelict Station'];
 
 export default function MiningPage() {
+  const { user } = useAuth();
+  const playerId = user?.id;
+
   const [missions, setMissions] = useState<Mission[]>([]);
   const [activeMission, setActiveMission] = useState<Mission | null>(null);
   const [isMinigameActive, setIsMinigameActive] = useState(false);
   const [pendingZone, setPendingZone] = useState<string | null>(null);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
+  const [resources, setResources] = useState<Resource[]>([]);
+
+  if (!playerId) return <div>Prosím prihláste sa pre zobrazenie zdrojov.</div>;
+
+  useEffect(() => {
+    async function fetchResources() {
+      try {
+        const res = await fetch(`/api/player/resources?playerId=${playerId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setResources(data);
+        }
+      } catch {
+        // Chyby ignorujeme ticho
+      }
+    }
+    fetchResources();
+  }, [playerId]);
 
   const initiateMission = (zone: string) => {
     setIsMinigameActive(true);
@@ -39,7 +65,7 @@ export default function MiningPage() {
       id,
       zone,
       duration,
-      status: "in-progress",
+      status: 'in-progress',
       log,
     };
 
@@ -68,13 +94,11 @@ export default function MiningPage() {
 
       const updatedMission = {
         ...newMission,
-        status: "complete",
+        status: 'complete',
         log: [...log, result],
       };
 
-      setMissions((prev) =>
-        prev.map((m) => (m.id === id ? updatedMission : m))
-      );
+      setMissions((prev) => prev.map((m) => (m.id === id ? updatedMission : m)));
       setActiveMission(null);
       setRemainingTime(null);
     }, duration * 1000);
@@ -83,7 +107,22 @@ export default function MiningPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto text-white">
       <h1 className="text-4xl font-extrabold neon-glow text-center">⚙️ Tactical Mining</h1>
-      <p className="text-gray-400 text-center mt-2">Plan missions, send your team, and deal with the unknown.</p>
+
+      <div className="flex justify-center gap-6 mt-4 mb-8">
+        {resources.length === 0 && <div className="text-gray-500 italic">Loading resources...</div>}
+        {resources.map((res) => (
+          <div
+            key={res.miningNodeName}
+            className="bg-yellow-700 px-3 py-1 rounded text-black font-semibold"
+          >
+            {res.miningNodeName}: {res.quantity}
+          </div>
+        ))}
+      </div>
+
+      <p className="text-gray-400 text-center mt-2">
+        Plan missions, send your team, and deal with the unknown.
+      </p>
 
       {isMinigameActive && <PreLaunchMinigame onSuccess={handleMinigameSuccess} />}
 

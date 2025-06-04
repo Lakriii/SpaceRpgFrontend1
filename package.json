@@ -11,7 +11,9 @@
     "lint": "next lint",
     "seed": "npx tsx drizzle/seed.ts",
     "seedResearch": "npx tsx drizzle/seedResearch.ts",
-    "drizzle-kit": "drizzle-kit"
+    "drizzle-kit": "drizzle-kit",
+    "seed:mining": "tsx --require tsconfig-paths/register drizzle/seedMiningNodes.ts"
+
   },
   "dependencies": {
     "@libsql/client": "^0.15.6",
@@ -42,6 +44,7 @@
     "eslint-config-next": "15.2.1",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "../../../../lib/db/db";
 import { users, players } from "../../../../lib/db/schema";
-import { playerResearch } from '../../../../lib/db/schema/research'; // uprav podľa cesty
+import { playerResearch } from "../../../../lib/db/schema/research";
+import { playerResources, miningNodes } from "../../../../lib/db/schema/mining"; // ⬅️ nový import
 
 export async function POST(request: Request) {
   try {
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Vlož používateľa a získaj ID
+    // Vlož používateľa
     const insertedUsers = await db.insert(users).values({
       email,
       password,
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Vytvor default player profil
+    // Vytvor hráča
     const insertedPlayers = await db.insert(players).values({
       user_id: userId,
       level: 1,
@@ -78,27 +79,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // ID hlavných uzlov výskumu, ktoré chceme odomknúť pri registrácii
-    const basicResearchNodeIds = [1, 5, 9, 13, 17]; // podľa tvojich seed dát
-
-    const now = Date.now();
-
-    // Vložíme základné výskumy ako completed (alebo podľa potreby iný status)
-    await Promise.all(
-  basicResearchNodeIds.map((researchNodeId) =>
-    db.insert(playerResearch).values({
+    // ✅ Načítanie mining nodes a priradenie default resources
+    const nodeList = await db.select().from(miningNodes);
+    const defaultResources = nodeList.map((node) => ({
       player_id: playerId,
-      research_node_id: researchNodeId,
-      status: "unlocked",    // alebo "available", podľa tvojho systému
-      started_at: null,
-      completed_at: null,
-    })
-  )
-);
+      mining_node_id: node.id,
+      quantity: 10,
+      last_mined_at: null,
+    }));
+    await db.insert(playerResources).values(defaultResources);
+
+    // ✅ Výskumné uzly
+    const basicResearchNodeIds = [1, 5, 9, 13, 17];
+    await Promise.all(
+      basicResearchNodeIds.map((researchNodeId) =>
+        db.insert(playerResearch).values({
+          player_id: playerId,
+          research_node_id: researchNodeId,
+          status: "unlocked",
+          started_at: null,
+          completed_at: null,
+        })
+      )
+    );
 
     const response = NextResponse.json({
       success: true,
-      message: "User registered, player profile created and basic research unlocked successfully",
+      message:
+        "User registered, player profile and resources created, research unlocked.",
     });
 
     response.cookies.set("isAuthenticated", "true", {
