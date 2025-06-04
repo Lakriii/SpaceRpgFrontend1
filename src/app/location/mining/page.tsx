@@ -1,163 +1,116 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import PreLaunchMinigame from '@/components/mining/PreLaunchMinigame';
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Gamepad, Zap, Settings, Users, Target } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-
-type Mission = {
-  id: number;
-  zone: string;
-  duration: number;
-  status: 'pending' | 'in-progress' | 'complete';
-  log: string[];
-};
-
-type Resource = {
-  miningNodeName: string;
-  quantity: number;
-};
-
-let missionId = 0;
-
-const miningZones = ['🪐 Asteroid Belt', '🌋 Volcanic Moon', '🌌 Derelict Station'];
+import PreLaunchMinigame from '@/components/mining/PreLaunchMinigame';
+import MissionControl from '@/components/mining/MissionControl';
+import ResourceDisplay from '@/components/mining/ResourceDisplay';
+import ZoneCard from '@/components/mining/ZoneCard';
+import MissionLog from '@/components/mining/MissionLog';
+import { useMining, miningZones } from '@/hooks/useMining';
 
 export default function MiningPage() {
   const { user } = useAuth();
   const playerId = user?.id;
 
-  const [missions, setMissions] = useState<Mission[]>([]);
-  const [activeMission, setActiveMission] = useState<Mission | null>(null);
-  const [isMinigameActive, setIsMinigameActive] = useState(false);
-  const [pendingZone, setPendingZone] = useState<string | null>(null);
-  const [remainingTime, setRemainingTime] = useState<number | null>(null);
-  const [resources, setResources] = useState<Resource[]>([]);
+  const {
+    missions,
+    activeMission,
+    remainingTime,
+    isMinigameActive,
+    credits,
+    experience,
+    resources,
+    initiateMission,
+    handleMinigameSuccess
+  } = useMining(playerId);
 
-  if (!playerId) return <div>Prosím prihláste sa pre zobrazenie zdrojov.</div>;
-
-  useEffect(() => {
-    async function fetchResources() {
-      try {
-        const res = await fetch(`/api/player/resources?playerId=${playerId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setResources(data);
-        }
-      } catch {
-        // Chyby ignorujeme ticho
-      }
-    }
-    fetchResources();
-  }, [playerId]);
-
-  const initiateMission = (zone: string) => {
-    setIsMinigameActive(true);
-    setPendingZone(zone);
-  };
-
-  const handleMinigameSuccess = () => {
-    if (!pendingZone) return;
-
-    const zone = pendingZone;
-    const id = ++missionId;
-    const duration = Math.floor(Math.random() * 20) + 10;
-    const log = [`🛰 Launching mission to ${zone}`];
-    const newMission: Mission = {
-      id,
-      zone,
-      duration,
-      status: 'in-progress',
-      log,
-    };
-
-    setMissions((prev) => [...prev, newMission]);
-    setActiveMission(newMission);
-    setIsMinigameActive(false);
-    setPendingZone(null);
-    setRemainingTime(duration);
-
-    const interval = setInterval(() => {
-      setRemainingTime((prev) => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          clearInterval(interval);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    setTimeout(() => {
-      const success = Math.random() > 0.2;
-      const result = success
-        ? `✅ Successfully extracted rare minerals from ${zone}`
-        : `❌ Mission to ${zone} failed. Equipment lost.`;
-
-      const updatedMission = {
-        ...newMission,
-        status: 'complete',
-        log: [...log, result],
-      };
-
-      setMissions((prev) => prev.map((m) => (m.id === id ? updatedMission : m)));
-      setActiveMission(null);
-      setRemainingTime(null);
-    }, duration * 1000);
-  };
+  if (!playerId) {
+    return <div className="text-white text-center mt-20">🔐 Prihláste sa, aby ste mohli ťažiť suroviny.</div>;
+  }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto text-white">
-      <h1 className="text-4xl font-extrabold neon-glow text-center">⚙️ Tactical Mining</h1>
-
-      <div className="flex justify-center gap-6 mt-4 mb-8">
-        {resources.length === 0 && <div className="text-gray-500 italic">Loading resources...</div>}
-        {resources.map((res) => (
-          <div
-            key={res.miningNodeName}
-            className="bg-yellow-700 px-3 py-1 rounded text-black font-semibold"
-          >
-            {res.miningNodeName}: {res.quantity}
-          </div>
-        ))}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden">
+      {/* Animated background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-20 left-20 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+        <div className="absolute top-40 right-32 w-1 h-1 bg-purple-400 rounded-full animate-ping"></div>
+        <div className="absolute bottom-32 left-16 w-3 h-3 bg-cyan-400 rounded-full animate-pulse delay-700"></div>
+        <div className="absolute bottom-20 right-20 w-1 h-1 bg-pink-400 rounded-full animate-ping delay-1000"></div>
       </div>
 
-      <p className="text-gray-400 text-center mt-2">
-        Plan missions, send your team, and deal with the unknown.
-      </p>
+      <div className="relative z-10 p-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Gamepad className="w-8 h-8 text-cyan-400" />
+            <h1 className="text-5xl font-extrabold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+              MINING OPERATIONS
+            </h1>
+            <Gamepad className="w-8 h-8 text-cyan-400" />
+          </div>
+          <div className="flex items-center justify-center gap-8 text-sm text-gray-300">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-yellow-400" />
+              <span>Credits: {credits.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4 text-green-400" />
+              <span>XP: {experience.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-400" />
+              <span>Commander Rank</span>
+            </div>
+          </div>
+        </motion.div>
 
-      {isMinigameActive && <PreLaunchMinigame onSuccess={handleMinigameSuccess} />}
+        <ResourceDisplay resources={resources} />
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        {miningZones.map((zone) => (
-          <div key={zone} className="glassmorphism p-4 rounded-lg">
-            <h3 className="text-lg font-semibold text-yellow-300">{zone}</h3>
-            <p className="text-sm text-gray-300">Estimated mission time: 10–30s</p>
-            <button
-              className="mt-2 px-4 py-2 bg-yellow-700 hover:bg-yellow-800 rounded"
-              onClick={() => initiateMission(zone)}
-              disabled={!!activeMission || isMinigameActive}
+        {activeMission && remainingTime && (
+          <MissionControl 
+            mission={activeMission} 
+            remainingTime={remainingTime} 
+          />
+        )}
+
+        <AnimatePresence>
+          {isMinigameActive && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
             >
-              🚀 Launch Mission
-            </button>
-          </div>
-        ))}
-      </div>
+              <PreLaunchMinigame onSuccess={handleMinigameSuccess} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-white mb-2">📜 Mission Log</h2>
-        {missions.length === 0 && <p className="text-gray-500">No missions yet.</p>}
-        {missions.map((m) => (
-          <div key={m.id} className="glassmorphism p-3 rounded mb-2">
-            <h4 className="text-md font-semibold text-blue-400">
-              Mission #{m.id} to {m.zone}
-            </h4>
-            <p className="text-sm text-gray-400">Status: {m.status}</p>
-            <ul className="text-sm mt-1 space-y-1 text-gray-300">
-              {m.log.map((entry, i) => (
-                <li key={i}>{entry}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+        >
+          {miningZones.map((zone, index) => (
+            <ZoneCard
+              key={zone.name}
+              zone={zone}
+              index={index}
+              onLaunch={() => initiateMission(zone)}
+              disabled={!!activeMission || isMinigameActive}
+            />
+          ))}
+        </motion.div>
+
+        <MissionLog missions={missions} />
       </div>
     </div>
   );
