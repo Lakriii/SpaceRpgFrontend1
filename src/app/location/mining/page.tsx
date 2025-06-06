@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gamepad, Zap, Settings, Users, Target } from 'lucide-react';
+import { Gamepad, Zap, Users, Target } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import PreLaunchMinigame from '@/components/mining/PreLaunchMinigame';
 import MissionControl from '@/components/mining/MissionControl';
@@ -28,13 +28,27 @@ export default function MiningPage() {
   } = useMining(playerId);
 
   if (!playerId) {
-    return <div className="text-white text-center mt-20">🔐 Prihláste sa, aby ste mohli ťažiť suroviny.</div>;
+    return (
+      <div className="text-white text-center mt-20">
+        🔐 Prihláste sa, aby ste mohli ťažiť suroviny.
+      </div>
+    );
   }
+
+  // Kontrolný výpis dát hráča a resources do konzoly
+  console.log("🕵️‍♂️ Player data debug:", {
+    playerId,
+    credits,
+    experience,
+    resources,
+    missions,
+    activeMission,
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden">
-      {/* Animated background */}
-      <div className="absolute inset-0 opacity-20">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-20 left-20 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
         <div className="absolute top-40 right-32 w-1 h-1 bg-purple-400 rounded-full animate-ping"></div>
         <div className="absolute bottom-32 left-16 w-3 h-3 bg-cyan-400 rounded-full animate-pulse delay-700"></div>
@@ -43,7 +57,7 @@ export default function MiningPage() {
 
       <div className="relative z-10 p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
@@ -58,11 +72,21 @@ export default function MiningPage() {
           <div className="flex items-center justify-center gap-8 text-sm text-gray-300">
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-400" />
-              <span>Credits: {credits.toLocaleString()}</span>
+              <span>
+                Credits:{' '}
+                {typeof credits === 'object' && credits !== null
+                  ? (credits.value ?? 0).toLocaleString()
+                  : (credits ?? 0).toLocaleString()}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Target className="w-4 h-4 text-green-400" />
-              <span>XP: {experience.toLocaleString()}</span>
+              <span>
+                XP:{' '}
+                {typeof experience === 'object' && experience !== null
+                  ? (experience.value ?? 0).toLocaleString()
+                  : (experience ?? 0).toLocaleString()}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-blue-400" />
@@ -71,15 +95,20 @@ export default function MiningPage() {
           </div>
         </motion.div>
 
+        {/* Debug výpis dát priamo v UI */}
+        <pre className="text-xs text-gray-300 bg-gray-800 p-4 rounded max-w-xl mx-auto mb-8 overflow-auto">
+          {JSON.stringify({ credits, experience, resources }, null, 2)}
+        </pre>
+
+        {/* Resources */}
         <ResourceDisplay resources={resources} />
 
-        {activeMission && remainingTime && (
-          <MissionControl 
-            mission={activeMission} 
-            remainingTime={remainingTime} 
-          />
+        {/* Mission in progress */}
+        {activeMission && remainingTime !== null && (
+          <MissionControl mission={activeMission} remainingTime={remainingTime} />
         )}
 
+        {/* Minigame overlay */}
         <AnimatePresence>
           {isMinigameActive && (
             <motion.div
@@ -93,7 +122,8 @@ export default function MiningPage() {
           )}
         </AnimatePresence>
 
-        <motion.div 
+        {/* Zone selection */}
+        <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -101,7 +131,7 @@ export default function MiningPage() {
         >
           {miningZones.map((zone, index) => (
             <ZoneCard
-              key={zone.name}
+              key={zone.id}
               zone={zone}
               index={index}
               onLaunch={() => initiateMission(zone)}
@@ -110,6 +140,7 @@ export default function MiningPage() {
           ))}
         </motion.div>
 
+        {/* Mission history */}
         <MissionLog missions={missions} />
       </div>
     </div>

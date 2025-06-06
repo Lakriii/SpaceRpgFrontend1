@@ -18,8 +18,14 @@ export default function CombatPanel({ player }: { player: Player }) {
   ];
 
   const progressStats = [
-    { label: "Experience", value: `${player.experience} / ${player.next_level_exp}` },
-    { label: "Credits", value: `${player.credits} 💰` },
+    {
+      label: "Experience",
+      value: `${typeof player.experience === "object" ? player.experience.value : player.experience} / ${player.next_level_exp}`,
+    },
+    {
+      label: "Credits",
+      value: `${typeof player.credits === "object" ? player.credits.value : player.credits} 💰`,
+    },
   ];
 
   return (

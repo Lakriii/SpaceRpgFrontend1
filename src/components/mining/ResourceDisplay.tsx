@@ -43,7 +43,7 @@ export default function ResourceDisplay({ resources }: ResourceDisplayProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {resources.map((resource, index) => (
           <motion.div
-            key={resource.miningNodeName}
+            key={`${resource.miningNodeName}-${index}`} // unikátny key s indexom
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}

@@ -1,4 +1,3 @@
-// src/app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,14 +6,16 @@ import PlayerDashboard from "@/components/player/PlayerDashboard";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
-  const [player, setPlayer] = useState<any | null>(null);
+  const [playerData, setPlayerData] = useState<any>(null);
 
   useEffect(() => {
     const fetchPlayer = async () => {
       if (user) {
         const res = await fetch(`/api/player?userId=${user.id}`);
-        const data = await res.json();
-        setPlayer(data);
+        if (res.ok) {
+          const data = await res.json();
+          setPlayerData(data.player); // Tu dávam rovno player, tak ako to bolo
+        }
       }
     };
 
@@ -29,5 +30,5 @@ export default function DashboardPage() {
     return <div className="text-center text-red-500 mt-10">You must be logged in to view this page.</div>;
   }
 
-  return <PlayerDashboard player={player} />;
+  return <PlayerDashboard player={playerData} />;
 }

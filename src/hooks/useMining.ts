@@ -10,14 +10,16 @@ type Mission = {
   log: string[];
   risk: 'low' | 'medium' | 'high';
   reward: number;
-  nodeId?: number;  // pridávam nodeId pre zaslanie na API
-  yieldAmount?: number; // koľko suroviny získal hráč
+  nodeId?: number;
+  yieldAmount?: number;
 };
 
 type Resource = {
-  miningNodeName: string;
+  nodeId: number;
+  nodeName: string;
+  rarity: 'common' | 'rare' | 'legendary';
   quantity: number;
-  type: 'common' | 'rare' | 'legendary';
+  lastMinedAt: string | null;
 };
 
 let missionId = 0;
@@ -55,11 +57,24 @@ export const miningZones = [
   }
 ];
 
+function safeNumber(value: any): number {
+  if (value == null) return 0;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const n = Number(value);
+    return isNaN(n) ? 0 : n;
+  }
+  if (typeof value === 'object') {
+    if ('value' in value && typeof value.value === 'number') return value.value;
+  }
+  return 0;
+}
+
 export function useMining(playerId: string | undefined) {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [activeMission, setActiveMission] = useState<Mission | null>(null);
   const [isMinigameActive, setIsMinigameActive] = useState(false);
-  const [pendingZone, setPendingZone] = useState<any>(null);
+  const [pendingZone, setPendingZone] = useState<typeof miningZones[0] | null>(null);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const [credits, setCredits] = useState(0);
   const [experience, setExperience] = useState(0);
@@ -69,23 +84,31 @@ export function useMining(playerId: string | undefined) {
     if (!playerId) return;
 
     async function fetchPlayerData() {
-      const res = await fetch(`/api/player/status?playerId=${playerId}`);
-      const data = await res.json();
-      setCredits(data.credits);
-      setExperience(data.experience);
-    }
+      try {
+        const res = await fetch(`/api/player?userId=${playerId}`);
+        if (!res.ok) {
+          console.error('Failed to fetch player data');
+          return;
+        }
+        const data = await res.json();
 
-    async function fetchResources() {
-      const res = await fetch(`/api/player/resources?playerId=${playerId}`);
-      const data = await res.json();
-      setResources(data);
+        if (data.player) {
+          setCredits(safeNumber(data.player.credits));
+          setExperience(safeNumber(data.player.experience));
+        }
+
+        if (data.resources) {
+          setResources(data.resources);
+        }
+      } catch (err) {
+        console.error('Error fetching player data:', err);
+      }
     }
 
     fetchPlayerData();
-    fetchResources();
   }, [playerId]);
 
-  const initiateMission = (zone: any) => {
+  const initiateMission = (zone: typeof miningZones[0]) => {
     setIsMinigameActive(true);
     setPendingZone(zone);
   };
@@ -144,23 +167,20 @@ export function useMining(playerId: string | undefined) {
       setRemainingTime(null);
 
       if (success) {
-        // Pošleme výsledky na API, aby sa uložili do profilu
-        const miningResults = [
-          {
-            miningNodeId: zone.id,
-            quantity: zone.yieldAmount
-          }
-        ];
-
         try {
           const res = await fetch('/api/mining/complete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              playerId,
+              userId: playerId,  // POZOR: správny kľúč je userId
               credits: reward,
               experience: Math.floor(reward / 2),
-              miningResults
+              miningResults: [
+                {
+                  miningNodeId: zone.id,
+                  quantity: zone.yieldAmount || 0
+                }
+              ]
             })
           });
 
@@ -168,13 +188,15 @@ export function useMining(playerId: string | undefined) {
             throw new Error('Failed to save mining results');
           }
 
-          // Aktualizuj lokálny stav z API, aby mal aktuálne resources, credits, xp
-          const updatedPlayerRes = await fetch(`/api/player/resources?playerId=${playerId}`).then(r => r.json());
-          setResources(updatedPlayerRes);
+          const updatedData = await fetch(`/api/player?userId=${playerId}`).then(r => r.json());
 
-          const updatedPlayerStatus = await fetch(`/api/player/status?playerId=${playerId}`).then(r => r.json());
-          setCredits(updatedPlayerStatus.credits);
-          setExperience(updatedPlayerStatus.experience);
+          if (updatedData.player) {
+            setCredits(safeNumber(updatedData.player.credits));
+            setExperience(safeNumber(updatedData.player.experience));
+          }
+          if (updatedData.resources) {
+            setResources(updatedData.resources);
+          }
         } catch (err) {
           console.error('Error saving mining results:', err);
         }

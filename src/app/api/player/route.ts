@@ -1,6 +1,5 @@
-// src/app/api/player/route.ts
 import { db } from "@lib/db/db";
-import { players, users } from "@lib/db/schema";
+import { players, users, playerResources, miningNodes } from "@lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -12,15 +11,37 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing userId" }, { status: 400 });
   }
 
-  const result = await db
+  // Načítaj hráča spolu s username
+  const playerResult = await db
     .select({
       ...players,
-      username: users.username, 
+      username: users.username,
     })
     .from(players)
     .innerJoin(users, eq(players.user_id, users.id))
     .where(eq(players.user_id, userId))
     .limit(1);
 
-  return NextResponse.json(result[0] || null);
+  const player = playerResult[0];
+  if (!player) {
+    return NextResponse.json(null);
+  }
+
+  // Načítaj zdroje hráča (resources)
+  const resources = await db
+    .select({
+      nodeId: miningNodes.id,
+      nodeName: miningNodes.name,
+      rarity: miningNodes.rarity,
+      quantity: playerResources.quantity,
+      lastMinedAt: playerResources.last_mined_at,
+    })
+    .from(playerResources)
+    .leftJoin(miningNodes, eq(playerResources.mining_node_id, miningNodes.id))
+    .where(eq(playerResources.player_id, player.id));
+
+  return NextResponse.json({
+    player,
+    resources,
+  });
 }

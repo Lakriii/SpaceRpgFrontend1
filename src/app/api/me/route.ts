@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();  // pridany await
   const userId = cookieStore.get("userId")?.value;
 
   if (!userId) {
