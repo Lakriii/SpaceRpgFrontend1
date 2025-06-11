@@ -2,7 +2,11 @@
 
 plus global instal tsx
 
+..\SpaceRpgFrontend1> npx drizzle-kit generate --config ./drizzle.config.ts
+
 npx drizzle-kit generate
+
+..\SpaceRpgFrontend1> npx drizzle-kit migrate --config ./drizzle.config.ts
 
 npx drizzle-kit migrate
 

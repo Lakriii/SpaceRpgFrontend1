@@ -1,7 +1,7 @@
-import { Npc } from "@/data/npcs";
+import { Npc } from "@/types/Npc";
 import InteractionIcon, { InteractionType } from "./InteractionIcon";
 import { useState } from "react";
-import InteractionModal from "./InteractionModal"; // importujeme modal
+import InteractionModal from "./InteractionModal";
 
 type Props = {
   npc: Npc;
@@ -13,13 +13,13 @@ export default function NpcCard({ npc, onClick }: Props) {
   const [currentInteraction, setCurrentInteraction] = useState<InteractionType | null>(null);
 
   const handleInteraction = (type: InteractionType) => {
-    setCurrentInteraction(type); // Uložíme typ interakcie
-    setModalOpen(true); // Otvoríme modal
+    setCurrentInteraction(type);
+    setModalOpen(true);
   };
 
   const closeModal = () => {
-    setModalOpen(false); // Zavrieme modal
-    setCurrentInteraction(null); // Resetujeme interakciu
+    setModalOpen(false);
+    setCurrentInteraction(null);
   };
 
   return (
@@ -41,14 +41,13 @@ export default function NpcCard({ npc, onClick }: Props) {
       <p className="text-gray-300 text-sm mb-2">📍 {npc.location}</p>
 
       <div className="flex gap-3 mt-2 text-2xl">
-        {npc.interactions.map((interaction) => (
-          <InteractionIcon key={interaction} type={interaction} onInteract={handleInteraction} />
+        {(npc.interactions ?? []).map((interaction) => (
+          <InteractionIcon key={interaction} type={interaction as InteractionType} onInteract={handleInteraction} />
         ))}
       </div>
 
-      {/* Modal */}
       <InteractionModal
-        type={currentInteraction || "🧠"} // prednastavený typ, ak je null
+        type={currentInteraction || "🧠"}
         isOpen={modalOpen}
         onClose={closeModal}
       />

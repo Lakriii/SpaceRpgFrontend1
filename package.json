@@ -12,7 +12,8 @@
     "seed": "npx tsx drizzle/seed.ts",
     "seedResearch": "npx tsx drizzle/seedResearch.ts",
     "drizzle-kit": "drizzle-kit",
-    "seed:mining": "tsx --require tsconfig-paths/register drizzle/seedMiningNodes.ts"
+    "seed:mining": "tsx --require tsconfig-paths/register drizzle/seedMiningNodes.ts",
+    "seednpcs": "npx tsx drizzle/seedNpcs.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.15.6",
