@@ -63,16 +63,22 @@ export async function POST(req: Request) {
           .update(playerResources)
           .set({
             quantity: updatedQuantity,
-            last_mined_at: Date.now(),
+            last_mined_at: new Date()
+
           })
-          .where(eq(playerResources.id, existingResource.id));
+           .where(
+      and(
+        eq(playerResources.player_id, playerId),
+        eq(playerResources.mining_node_id, miningNodeIdNum)
+      )
+    );
       } else {
         // Ak neexistuje, vložíme nový záznam
         await db.insert(playerResources).values({
           player_id: playerId,
           mining_node_id: miningNodeIdNum,
           quantity: quantityNum,
-          last_mined_at: Date.now(),
+          last_mined_at: new Date()
         });
       }
     }

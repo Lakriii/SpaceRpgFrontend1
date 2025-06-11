@@ -35,15 +35,7 @@ export default function MiningPage() {
     );
   }
 
-  // Kontrolný výpis dát hráča a resources do konzoly
-  console.log("🕵️‍♂️ Player data debug:", {
-    playerId,
-    credits,
-    experience,
-    resources,
-    missions,
-    activeMission,
-  });
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden">
@@ -95,10 +87,7 @@ export default function MiningPage() {
           </div>
         </motion.div>
 
-        {/* Debug výpis dát priamo v UI */}
-        <pre className="text-xs text-gray-300 bg-gray-800 p-4 rounded max-w-xl mx-auto mb-8 overflow-auto">
-          {JSON.stringify({ credits, experience, resources }, null, 2)}
-        </pre>
+       
 
         {/* Resources */}
         <ResourceDisplay resources={resources} />
