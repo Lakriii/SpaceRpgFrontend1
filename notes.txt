@@ -11,3 +11,5 @@ npx drizzle-kit generate
 npx drizzle-kit migrate
 
 npx drizzle-kit studio
+ 
+ zdroje mame nefunguje nakup v databaze nemame nakup nove zdroje
