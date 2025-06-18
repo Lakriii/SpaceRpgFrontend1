@@ -4,39 +4,46 @@ import { items } from "@lib/db/schema/items/base";
 import { inArray } from "drizzle-orm";
 
 async function seedNpcs() {
-  // Vyčisti tabuľky
+  // 🧹 Vyčisti tabuľky v správnom poradí (závislosti)
   await db.delete(npcItemsForSale);
   await db.delete(npcInteractions);
   await db.delete(npcs);
 
-// pred tým než vložíš náhodné položky, vlož tieto:
-const requiredItems = [
-  { name: "Iron Ore", description: "Basic iron ore.", value: 100, rarity: "common", content_type: "quest_item" },
-  { name: "Copper Ore", description: "Basic copper ore.", value: 80, rarity: "common", content_type: "quest_item" },
-  { name: "Gold Nugget", description: "Shiny gold nugget.", value: 500, rarity: "rare", content_type: "quest_item" },
-  { name: "Silver Chunk", description: "Chunk of silver.", value: 300, rarity: "uncommon", content_type: "quest_item" },
-  { name: "Crystal Shard", description: "Rare energy crystal.", value: 1000, rarity: "epic", content_type: "quest_item" },
-];
-await db.insert(items).values(requiredItems);
+  // 📦 Povinné quest itemy
+  const requiredItems = [
+    { name: "Iron Ore", description: "Basic iron ore.", value: 100, rarity: "common", content_type: "quest_item" },
+    { name: "Copper Ore", description: "Basic copper ore.", value: 80, rarity: "common", content_type: "quest_item" },
+    { name: "Gold Nugget", description: "Shiny gold nugget.", value: 500, rarity: "rare", content_type: "quest_item" },
+    { name: "Silver Chunk", description: "Chunk of silver.", value: 300, rarity: "uncommon", content_type: "quest_item" },
+    { name: "Crystal Shard", description: "Rare energy crystal.", value: 1000, rarity: "epic", content_type: "quest_item" },
+  ];
 
+  const itemNames = requiredItems.map((i) => i.name);
 
-const itemNames = ["Iron Ore", "Copper Ore", "Gold Nugget", "Silver Chunk", "Crystal Shard"];
+  // 🕵️ Over existujúce položky
+  const existingItems = await db
+    .select()
+    .from(items)
+    .where(inArray(items.name, itemNames));
 
-const existingItems = await db
-  .select()
-  .from(items)
-  .where(inArray(items.name, itemNames));
+  const existingItemNames = new Set(existingItems.map(i => i.name));
+  const missingItems = requiredItems.filter(item => !existingItemNames.has(item.name));
 
-if (existingItems.length !== itemNames.length) {
-  console.error("❌ Niektoré položky neexistujú v databáze, seed nemôže pokračovať.");
-  console.log("Existujúce položky:", existingItems.map(i => i.name));
-  process.exit(1);
-}
+  if (missingItems.length > 0) {
+    await db.insert(items).values(missingItems);
+    console.log(`➕ Pridané chýbajúce položky: ${missingItems.map(i => i.name).join(", ")}`);
+  }
 
-// Mapa pre rýchle vyhľadávanie item_id podľa názvu
-const itemMap = new Map(existingItems.map(item => [item.name, item.id]));
+  // 🔄 Načítaj všetky quest itemy znova (kvôli ID)
+  const allItems = await db
+    .select()
+    .from(items)
+    .where(inArray(items.name, itemNames));
 
-  // ✅ 3. Vlož 5 NPC
+  // 🔗 Mapa itemov podľa názvu
+  const itemMap = new Map(allItems.map(item => [item.name, item.id]));
+
+  // 👥 NPC postavy
   const insertedNpcs = await db
     .insert(npcs)
     .values([
@@ -83,7 +90,7 @@ const itemMap = new Map(existingItems.map(item => [item.name, item.id]));
     ])
     .returning({ id: npcs.id, name: npcs.name });
 
-  // ✅ 4. Interakcie pre každé NPC
+  // 💬 Interakcie
   const npcInteractionsData = insertedNpcs.flatMap((npc) => {
     switch (npc.name) {
       case "Bárdos the Merchant":
@@ -118,19 +125,19 @@ const itemMap = new Map(existingItems.map(item => [item.name, item.id]));
 
   await db.insert(npcInteractions).values(npcInteractionsData);
 
-  // ✅ 5. Items na predaj (naviazané na mining)
+  // 🛒 Items na predaj
   const itemsForSale = insertedNpcs.flatMap((npc) => {
     if (npc.name === "Bárdos the Merchant") {
       return [
         {
           npc_id: npc.id,
-          item_id: itemMap["Iron Ore"],
+          item_id: itemMap.get("Iron Ore")!,
           quantity: 10,
           price: 100,
         },
         {
           npc_id: npc.id,
-          item_id: itemMap["Gold Nugget"],
+          item_id: itemMap.get("Gold Nugget")!,
           quantity: 2,
           price: 500,
         },
@@ -141,13 +148,13 @@ const itemMap = new Map(existingItems.map(item => [item.name, item.id]));
       return [
         {
           npc_id: npc.id,
-          item_id: itemMap["Crystal Shard"],
+          item_id: itemMap.get("Crystal Shard")!,
           quantity: 1,
           price: 1000,
         },
         {
           npc_id: npc.id,
-          item_id: itemMap["Copper Ore"],
+          item_id: itemMap.get("Copper Ore")!,
           quantity: 5,
           price: 150,
         },
@@ -159,10 +166,9 @@ const itemMap = new Map(existingItems.map(item => [item.name, item.id]));
 
   if (itemsForSale.length > 0) {
     await db.insert(npcItemsForSale).values(itemsForSale);
-
   }
 
-  console.log("✅ NPC seed complete: 5 NPCs, multi-interactions, and mining-based items.");
+  console.log("✅ NPC seed complete: 5 NPCs, interakcie a mining-based predaj.");
 }
 
 seedNpcs().catch((e) => {

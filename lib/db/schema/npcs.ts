@@ -18,7 +18,7 @@ export const npcInteractions = sqliteTable("npc_interactions", {
     .references(() => npcs.id, { onDelete: "cascade" }),
   interaction_type: text("interaction_type").notNull(), // napr. 'trade', 'combat', 'conversation', 'reward'
 });
-
+ 
 export const npcItemsForSale = sqliteTable("npc_items_for_sale", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   npc_id: integer("npc_id")

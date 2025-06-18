@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Npc } from "@/data/npcs";
-import Trade from "./Trade";
+import TradeWrapper from "./TradeWrapper";
 import Combat from "./Combat";
 import Conversation from "./Conversation";
-import Reward from "./Reward";  // Import Reward component
+import Reward from "./Reward";
 
 type Props = {
   npc: Npc;
@@ -12,33 +12,26 @@ type Props = {
 
 const NpcModal: React.FC<Props> = ({ npc, onClose }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  
-  // Player's stats
-  const [playerGold, setPlayerGold] = useState<number>(1000);
-  const [playerInventory, setPlayerInventory] = useState<any[]>([]);
-  const [rewardClaimed, setRewardClaimed] = useState<boolean>(false);  // Track reward claim status
+  const [rewardClaimed, setRewardClaimed] = useState<boolean>(false);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
   };
 
   const handleClose = () => {
-    setActiveTab(null); // Reset tab state
-    onClose(); // Close modal
+    setActiveTab(null);
+    onClose();
   };
 
   const claimReward = () => {
-    // Add reward logic here
-    setRewardClaimed(true);  // Mark reward as claimed
-    setPlayerGold(playerGold + 200);  // Example: adding gold as reward
+    setRewardClaimed(true);
     alert("You have claimed your reward!");
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
       <div className="bg-[#1a1a3d] p-6 rounded-lg w-full h-full max-w-none relative overflow-auto">
-        
-        {/* Close button with hover effects */}
+
         <button
           onClick={handleClose}
           className="absolute top-2 right-2 text-gray-400 text-3xl hover:text-white hover:bg-red-600 w-10 h-10 flex items-center justify-center rounded-full border-2 border-transparent hover:border-red-600 transition-all"
@@ -57,7 +50,7 @@ const NpcModal: React.FC<Props> = ({ npc, onClose }) => {
 
         <p className="text-gray-300 mb-4">{npc.bio}</p>
 
-        {/* Tabs for interactions */}
+        {/* Interaction Tabs */}
         <div className="mb-4 flex space-x-4 border-b-2">
           {npc.interactions?.includes("🛒") && (
             <button
@@ -67,7 +60,6 @@ const NpcModal: React.FC<Props> = ({ npc, onClose }) => {
               🛒 Trade
             </button>
           )}
-
           {npc.interactions?.includes("⚔️") && (
             <button
               onClick={() => handleTabChange("combat")}
@@ -76,7 +68,6 @@ const NpcModal: React.FC<Props> = ({ npc, onClose }) => {
               ⚔️ Combat
             </button>
           )}
-
           {npc.interactions?.includes("🧠") && (
             <button
               onClick={() => handleTabChange("conversation")}
@@ -85,7 +76,6 @@ const NpcModal: React.FC<Props> = ({ npc, onClose }) => {
               🧠 Conversation
             </button>
           )}
-
           {npc.interactions?.includes("🎁") && (
             <button
               onClick={() => handleTabChange("reward")}
@@ -96,15 +86,14 @@ const NpcModal: React.FC<Props> = ({ npc, onClose }) => {
           )}
         </div>
 
-        {/* Tab Content */}
+        {/* Interaction Content */}
         <div className="space-y-4">
           {activeTab === "trade" && npc.interactions?.includes("🛒") && (
-            <Trade
-              playerGold={playerGold}
-              setPlayerGold={setPlayerGold}
-              playerInventory={playerInventory}
-              setPlayerInventory={setPlayerInventory}
-              itemsForSale={[{ id: "1", name: "Sword", price: 500, description: "A sharp sword" }, { id: "2", name: "Potion", price: 100, description: "Restores health" }]}
+            <TradeWrapper
+              itemsForSale={npc.tradeItems || [
+                { id: "1", name: "Sword", price: 500, description: "A sharp sword" },
+                { id: "2", name: "Potion", price: 100, description: "Restores health" }
+              ]}
             />
           )}
 

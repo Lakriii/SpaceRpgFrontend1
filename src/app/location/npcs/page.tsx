@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { Npc } from "@/types/Npc";
@@ -9,15 +9,20 @@ export default function NpcsPage() {
   const [selectedNpc, setSelectedNpc] = useState<Npc | null>(null);
   const [npcList, setNpcList] = useState<Npc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchNpcs = async () => {
       try {
         const res = await fetch("/api/npcs");
-        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
+        }
+        const data: Npc[] = await res.json();
         setNpcList(data);
-      } catch (error) {
-        console.error("Failed to load NPCs:", error);
+      } catch (err: any) {
+        console.error("Failed to load NPCs:", err);
+        setError("Nepodarilo sa načítať NPC.");
       } finally {
         setLoading(false);
       }
@@ -30,6 +35,10 @@ export default function NpcsPage() {
     return <div className="text-center text-white mt-10">Loading NPCs...</div>;
   }
 
+  if (error) {
+    return <div className="text-center text-red-400 mt-10">{error}</div>;
+  }
+
   return (
     <div className="p-8 max-w-5xl mx-auto text-white">
       <h1 className="text-4xl font-extrabold neon-glow text-center">👤 NPC Interaction</h1>
@@ -37,7 +46,7 @@ export default function NpcsPage() {
 
       <div className="mt-10 grid sm:grid-cols-2 md:grid-cols-3 gap-6">
         {npcList.map((npc) => (
-          <NpcCard key={npc.id} npc={npc} onClick={setSelectedNpc} />
+          <NpcCard key={npc.id} npc={npc} onClick={() => setSelectedNpc(npc)} />
         ))}
       </div>
 

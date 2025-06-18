@@ -7,4 +7,6 @@ export const items = sqliteTable("items", {
   value: integer("value"),
   rarity: text("rarity").notNull(),
   content_type: text("content_type").notNull(),
+   price: integer("price").notNull().default(1),
+  costType: text("cost_type").default("Iron Ore"), // alebo .nullable()
 });
