@@ -20,6 +20,7 @@ export default function NpcsPage() {
         }
         const data: Npc[] = await res.json();
         setNpcList(data);
+        console.log("Fetched NPC list:", data);
       } catch (err: any) {
         console.error("Failed to load NPCs:", err);
         setError("Nepodarilo sa načítať NPC.");
@@ -38,6 +39,9 @@ export default function NpcsPage() {
   if (error) {
     return <div className="text-center text-red-400 mt-10">{error}</div>;
   }
+
+  // DEBUG: log pred returnom
+  console.log("NPC List to render:", npcList);
 
   return (
     <div className="p-8 max-w-5xl mx-auto text-white">

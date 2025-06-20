@@ -27,12 +27,12 @@ export async function GET(request: Request) {
       .from(players)
       .where(eq(players.id, Number(playerId)))
       .limit(1);
-    console.log("✅ [STEP 2] Player fetched:", player);
 
     if (player.length === 0) {
       console.warn("❌ Player not found");
       return NextResponse.json({ error: "Player not found" }, { status: 404 });
     }
+    console.log("✅ [STEP 2] Player fetched:", player);
 
     // Fetch resources
     console.log("➡️ [STEP 3] Fetching player resources...");
@@ -50,7 +50,6 @@ export async function GET(request: Request) {
 
     const resources: Record<string, number> = {};
     resourcesRows.forEach((row) => {
-      console.log(`📦 Resource - ID: ${row.mining_node_id}, Name: ${row.node_name}, Qty: ${row.quantity}`);
       if (row.node_name) {
         resources[row.node_name] = row.quantity;
       }
@@ -64,9 +63,12 @@ export async function GET(request: Request) {
         quantity: playerInventory.quantity,
         id: items.id,
         name: items.name,
-        price: items.price,
         description: items.description,
-        costType: items.costType,
+        iron: items.iron,
+        credits: items.credits,
+        gold: items.gold,
+        rarity: items.rarity,
+        contentType: items.content_type,
       })
       .from(playerInventory)
       .innerJoin(items, eq(playerInventory.item_id, items.id))
@@ -78,9 +80,12 @@ export async function GET(request: Request) {
     const transformedInventory = inventoryItems.map((inv) => ({
       id: inv.itemId,
       name: inv.name,
-      price: inv.price,
       description: inv.description,
-      costType: inv.costType,
+      iron: inv.iron, // používaj iron, nie value
+      credits: inv.credits,
+      gold: inv.gold,
+      rarity: inv.rarity,
+      contentType: inv.contentType,
       quantity: inv.quantity,
     }));
 
@@ -94,7 +99,6 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     console.error("🔥 [ERROR] Exception in GET /api/playerresources:", error);
-    console.trace();
     return NextResponse.json(
       { error: error.message || "Server error" },
       { status: 500 }

@@ -1,13 +1,12 @@
-// drizzle/seed.ts
 import { db } from "../lib/db/db.ts";
 import {
-    users,
-    players,
+  users,
+  players,
   achievements,
   playerAchievements,
   items,
   marketItems,
-} from "../lib/db/schema"; 
+} from "../lib/db/schema";
 import { eq } from "drizzle-orm";
 
 async function seed() {
@@ -18,7 +17,7 @@ async function seed() {
     username: "test",
     password: "test123", // môžeš použiť bcrypt neskôr
   });
-  
+
   await db.insert(players).values({
     user_id: 1,
     level: 1,
@@ -74,13 +73,19 @@ async function seed() {
   const rarities = ["common", "uncommon", "rare", "epic", "legendary"];
   const contentTypes = ["weapon", "armor", "jewelry", "quest_item", "market_only"];
 
-  const itemData = Array.from({ length: 40 }, (_, i) => ({
-    name: `Item ${i + 1}`,
-    description: `Description for item ${i + 1}`,
-    value: Math.random() > 0.3 ? Math.floor(Math.random() * 9000 + 100) : null,
-    rarity: rarities[Math.floor(Math.random() * rarities.length)],
-    content_type: contentTypes[Math.floor(Math.random() * contentTypes.length)],
-  }));
+  const itemData = Array.from({ length: 40 }, (_, i) => {
+    const value = Math.random() > 0.3 ? Math.floor(Math.random() * 9000 + 100) : null;
+
+    return {
+      name: `Item ${i + 1}`,
+      description: `Description for item ${i + 1}`,
+      value,
+      credits: Math.floor(Math.random() * 5000),
+      gold: Math.floor(Math.random() * 200),
+      rarity: rarities[Math.floor(Math.random() * rarities.length)],
+      content_type: contentTypes[Math.floor(Math.random() * contentTypes.length)],
+    };
+  });
 
   const insertedItems = await db
     .insert(items)

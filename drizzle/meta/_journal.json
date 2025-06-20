@@ -57,6 +57,20 @@
       "when": 1750260093298,
       "tag": "0007_yummy_fabian_cortez",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1750414841500,
+      "tag": "0008_superb_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1750416719248,
+      "tag": "0009_clear_mole_man",
+      "breakpoints": true
     }
   ]
 }

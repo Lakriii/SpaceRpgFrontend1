@@ -1,7 +1,7 @@
 import { Npc } from "@/types/Npc";
 import InteractionIcon, { InteractionType } from "./InteractionIcon";
 import { useState } from "react";
-import InteractionModal from "./InteractionModal";
+import NpcModal from "./NpcModal"; // Importuj nový modal
 
 type Props = {
   npc: Npc;
@@ -21,7 +21,7 @@ export default function NpcCard({ npc, onClick }: Props) {
     setModalOpen(false);
     setCurrentInteraction(null);
   };
-
+console.log(npc);
   return (
     <div
       className="glassmorphism p-4 rounded-xl hover:scale-105 transition-transform cursor-pointer"
@@ -46,11 +46,14 @@ export default function NpcCard({ npc, onClick }: Props) {
         ))}
       </div>
 
-      <InteractionModal
-        type={currentInteraction || "🧠"}
-        isOpen={modalOpen}
-        onClose={closeModal}
-      />
+      {/* Nahradený InteractionModal za NpcModal */}
+      {modalOpen && currentInteraction && (
+        <NpcModal
+          npcId={11}
+          onClose={closeModal}
+          initialTab={currentInteraction}
+        />
+      )}
     </div>
   );
 }

@@ -4,9 +4,9 @@ export const items = sqliteTable("items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  value: integer("value"),
+  iron: integer("iron").default(0),
+  credits: integer("credits"),
+  gold: integer("gold"),
   rarity: text("rarity").notNull(),
   content_type: text("content_type").notNull(),
-   price: integer("price").notNull().default(1),
-  costType: text("cost_type").default("Iron Ore"), // alebo .nullable()
 });
