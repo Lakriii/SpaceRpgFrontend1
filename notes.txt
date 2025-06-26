@@ -18,3 +18,4 @@ npx drizzle-kit studio
           onClose={closeModal}
           initialTab={currentInteraction}
         />
+npc kupovanie funguje ale peniaze sa neodcitaju/predaj sa nepricitaju a skace eror pri predaji
