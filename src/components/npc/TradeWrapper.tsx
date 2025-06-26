@@ -1,59 +1,73 @@
 import React, { useEffect, useState } from "react";
 import Trade from "./Trade";
-import { Item } from "@/types/Item";
 import { useAuth } from "@/context/AuthContext";
 
 type Player = {
   id: number;
   user_id: number;
   level: number;
-  // další pole pokud chceš
 };
 
-type Resources = Record<string, number>;
+type Item = {
+  id: string;
+  name: string;
+  description: string;
+  iron: number;
+  credits: number;
+  gold: number;
+  rarity: string;
+  contentType: string;
+  quantity: number;
+  price: number;
+};
+
+type PlayerResources = Record<string, number>;
 
 type PlayerResourcesResponse = {
   player: Player;
-  resources: Resources;
+  resources: PlayerResources;
   inventory: Item[];
 };
 
 type TradeWrapperProps = {
-  itemsForSale: Item[];
+  itemsForSale: Item[];   // itemsForSale prichádza cez props
 };
 
 const TradeWrapper: React.FC<TradeWrapperProps> = ({ itemsForSale }) => {
   const { user, loading } = useAuth();
   const [player, setPlayer] = useState<Player | null>(null);
-  const [playerResources, setPlayerResources] = useState<Resources>({});
+  const [playerResources, setPlayerResources] = useState<PlayerResources>({});
   const [playerInventory, setPlayerInventory] = useState<Item[]>([]);
 
   useEffect(() => {
     if (!user || loading) return;
 
-    const fetchResources = async () => {
+    const fetchPlayerData = async () => {
       try {
-        const res = await fetch(`/api/playerresources?playerId=${user.id}`);
-        if (!res.ok) throw new Error("Failed to fetch");
+        const playerRes = await fetch(`/api/playerresources?playerId=${user.id}`);
+        if (!playerRes.ok) throw new Error("Failed to fetch player resources");
 
-        const data: PlayerResourcesResponse = await res.json();
-
-        setPlayer(data.player ?? null);
-        setPlayerResources(data.resources ?? {});
-        setPlayerInventory(data.inventory ?? []);
+        const playerData: PlayerResourcesResponse = await playerRes.json();
+        setPlayer(playerData.player);
+        setPlayerResources(playerData.resources);
+        setPlayerInventory(playerData.inventory);
       } catch (error) {
-        console.error("Error fetching player resources:", error);
+        console.error("Error fetching player data:", error);
         setPlayer(null);
         setPlayerResources({});
         setPlayerInventory([]);
       }
     };
 
-    fetchResources();
+    fetchPlayerData();
   }, [user, loading]);
 
-  if (loading || player === null) {
-    return <p className="text-gray-300">Loading resources...</p>;
+  if (loading) {
+    return <p className="text-gray-300">Loading user info...</p>;
+  }
+
+  if (!player) {
+    return <p className="text-red-500">Player not found or not logged in.</p>;
   }
 
   return (

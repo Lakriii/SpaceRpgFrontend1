@@ -41,41 +41,46 @@ const NpcModal: React.FC<Props> = ({ npcId, onClose, initialTab }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log(npcId);
-
   useEffect(() => {
-  if (typeof npcId !== "number" || isNaN(npcId)) {
-    return;
-  }
+    console.log("▶️ useEffect called with npcId:", npcId);
 
-  async function fetchNpc() {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log(`[API] Fetching NPC with ID: ${npcId}`);
-      const res = await fetch(`/api/npc/${npcId}`);
-      console.log("Response received", res);
-      if (!res.ok) throw new Error(`Failed to load NPC: ${res.statusText}`);
-      const data: FetchedNpc = await res.json();
-      console.log("Data fetched:", data);
-      setNpcData(data);
-
-      if (initialTab && !data.interactions.includes(initialTab)) {
-        setActiveTab(data.interactions[0] ?? null);
-      } else if (!activeTab) {
-        setActiveTab(data.interactions[0] ?? null);
-      }
-    } catch (e: any) {
-      console.error(e);
-      setError(e.message);
-    } finally {
-      setLoading(false);
+    if (typeof npcId !== "number" || isNaN(npcId)) {
+      console.warn("❌ Invalid npcId:", npcId);
+      setLoading(false); // fix: prevent infinite loading
+      return;
     }
-  }
 
-  fetchNpc();
-}, [npcId, initialTab]);
+    const fetchNpc = async () => {
+      setLoading(true);
+      setError(null);
 
+      try {
+        console.log(`[API] Fetching NPC with ID: ${npcId}`);
+        const res = await fetch(`/api/npc/${npcId}`);
+        console.log("Response received", res);
+
+        if (!res.ok) throw new Error(`Failed to load NPC: ${res.statusText}`);
+        const data: FetchedNpc = await res.json();
+
+        console.log("✅ NPC data fetched:", data);
+        setNpcData(data);
+
+        // Set default tab
+        if (initialTab && !data.interactions.includes(initialTab)) {
+          setActiveTab(data.interactions[0] ?? null);
+        } else if (!activeTab) {
+          setActiveTab(data.interactions[0] ?? null);
+        }
+      } catch (e: any) {
+        console.error("❌ Fetch error:", e);
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNpc();
+  }, [npcId, initialTab]);
 
   const claimReward = () => {
     setRewardClaimed(true);
@@ -88,6 +93,7 @@ const NpcModal: React.FC<Props> = ({ npcId, onClose, initialTab }) => {
     onClose();
   };
 
+  // 🌀 Loading overlay
   if (loading) {
     return (
       <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-60 z-50 text-white text-lg">
@@ -96,6 +102,7 @@ const NpcModal: React.FC<Props> = ({ npcId, onClose, initialTab }) => {
     );
   }
 
+  // ❌ Error overlay
   if (error) {
     return (
       <div className="fixed inset-0 flex flex-col justify-center items-center bg-black bg-opacity-60 z-50 text-red-500">
@@ -110,10 +117,12 @@ const NpcModal: React.FC<Props> = ({ npcId, onClose, initialTab }) => {
     );
   }
 
+  // ⛔️ No data fallback
   if (!npcData) return null;
 
   const { npc, interactions, itemsForSale } = npcData;
-
+  console.log("npcData:", npcData);
+  console.log("npc:", npc, "interactions:", interactions, "itemsForSale:", itemsForSale);
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
       <div className="bg-[#1a1a3d] p-6 rounded-lg w-full max-w-3xl relative overflow-auto max-h-[90vh]">

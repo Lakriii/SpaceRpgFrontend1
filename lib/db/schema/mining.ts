@@ -16,6 +16,7 @@ export const miningNodes = sqliteTable('mining_nodes', {
 export const playerResources = sqliteTable(
   'player_resources',
   {
+    id: integer('id').primaryKey({ autoIncrement: true }),
     player_id: integer('player_id').notNull().references(() => players.id, {
       onDelete: 'cascade',
     }),
@@ -25,7 +26,9 @@ export const playerResources = sqliteTable(
     quantity: integer('quantity').notNull().default(0),
     last_mined_at: integer('last_mined_at', { mode: 'timestamp' }).default(null),
   },
-  (table) => ({
-    primaryKey: [table.player_id, table.mining_node_id],
-  })
+  //(table) => ({
+    // Primárny kľúč (ID)
+    // Unikátny kombinovaný index namiesto composite PK
+  //  uniquePlayerNode: uniqueIndex('unique_player_node').on(table.player_id, table.mining_node_id),
+  //})
 );

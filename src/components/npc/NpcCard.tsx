@@ -1,7 +1,7 @@
 import { Npc } from "@/types/Npc";
 import InteractionIcon, { InteractionType } from "./InteractionIcon";
 import { useState } from "react";
-import NpcModal from "./NpcModal"; // Importuj nový modal
+import NpcModal from "./NpcModal";
 
 type Props = {
   npc: Npc;
@@ -13,15 +13,17 @@ export default function NpcCard({ npc, onClick }: Props) {
   const [currentInteraction, setCurrentInteraction] = useState<InteractionType | null>(null);
 
   const handleInteraction = (type: InteractionType) => {
+    console.log("🧩 Opening modal for NPC:", npc.id, npc.name, "Interaction:", type);
     setCurrentInteraction(type);
     setModalOpen(true);
   };
 
   const closeModal = () => {
+    console.log("❎ Closing modal");
     setModalOpen(false);
     setCurrentInteraction(null);
   };
-console.log(npc);
+
   return (
     <div
       className="glassmorphism p-4 rounded-xl hover:scale-105 transition-transform cursor-pointer"
@@ -42,14 +44,18 @@ console.log(npc);
 
       <div className="flex gap-3 mt-2 text-2xl">
         {(npc.interactions ?? []).map((interaction) => (
-          <InteractionIcon key={interaction} type={interaction as InteractionType} onInteract={handleInteraction} />
+          <InteractionIcon
+            key={interaction}
+            type={interaction as InteractionType}
+            onInteract={handleInteraction}
+          />
         ))}
       </div>
 
-      {/* Nahradený InteractionModal za NpcModal */}
+      {/* Modal s korektným NPC ID */}
       {modalOpen && currentInteraction && (
         <NpcModal
-          npcId={11}
+          npcId={npc.id} // ✅ FIX tu
           onClose={closeModal}
           initialTab={currentInteraction}
         />

@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     const defaultResources = nodeList.map((node) => ({
       player_id: playerId,
       mining_node_id: node.id,
-      quantity: 10,
+      quantity: 10000,
       last_mined_at: null,
     }));
     await db.insert(playerResources).values(defaultResources);

@@ -1,14 +1,19 @@
 import React, { useState } from "react";
-
-type Item = {
-  id: string;
+import { useAuth } from "@/context/AuthContext";
+type ItemForSale = {
+  id: number;
   name: string;
-  price: number;
   description: string;
-  costType: string;
+  iron: number;
+  credits: number;
+  gold: number;
+  rarity: string;
+  contentType: string;
+  quantity: number;
+  price: number;
 };
 
-type InventoryItem = Item & {
+type InventoryItem = ItemForSale & {
   quantity: number;
 };
 
@@ -19,7 +24,7 @@ type TradeProps = {
   setPlayerResources: (res: PlayerResources) => void;
   playerInventory: InventoryItem[];
   setPlayerInventory: (inventory: InventoryItem[]) => void;
-  itemsForSale: Item[];
+  itemsForSale: ItemForSale[];
 };
 
 const Trade: React.FC<TradeProps> = ({
@@ -29,104 +34,91 @@ const Trade: React.FC<TradeProps> = ({
   setPlayerInventory,
   itemsForSale,
 }) => {
+  const { user } = useAuth();  // získaš usera s id
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [sellQuantity, setSellQuantity] = useState<number>(1);
 
   const handleSellItem = () => {
     if (!selectedItem) return;
-    if (sellQuantity < 1) {
-      alert("Quantity must be at least 1");
-      return;
-    }
-    if (sellQuantity > selectedItem.quantity) {
-      alert(`You don't have that many ${selectedItem.name} to sell`);
-      return;
-    }
+    if (sellQuantity < 1) return alert("Quantity must be at least 1");
+    if (sellQuantity > selectedItem.quantity)
+      return alert(`You don't have that many ${selectedItem.name} to sell`);
 
-    const resourceType =
-      selectedItem.costType && selectedItem.costType.trim() !== ""
-        ? selectedItem.costType
-        : "Iron Ore";
-
-    // Aktualizujeme zdroje podľa počtu predaných kusov
+    const resourceType = selectedItem.contentType || "iron";
     const updatedResources = { ...playerResources };
     updatedResources[resourceType] =
       (updatedResources[resourceType] || 0) + selectedItem.price * sellQuantity;
     setPlayerResources(updatedResources);
 
-    // Aktualizujeme inventár - znížime quantity alebo odstránime položku
-    let updatedInventory;
-    if (selectedItem.quantity === sellQuantity) {
-      updatedInventory = playerInventory.filter(
-        (item) => item.id !== selectedItem.id
-      );
-    } else {
-      updatedInventory = playerInventory.map((item) =>
-        item.id === selectedItem.id
-          ? { ...item, quantity: item.quantity - sellQuantity }
-          : item
-      );
-    }
-    setPlayerInventory(updatedInventory);
+    const updatedInventory =
+      selectedItem.quantity === sellQuantity
+        ? playerInventory.filter((item) => item.id !== selectedItem.id)
+        : playerInventory.map((item) =>
+            item.id === selectedItem.id
+              ? { ...item, quantity: item.quantity - sellQuantity }
+              : item
+          );
 
-    alert(
-      `You sold ${sellQuantity} x ${selectedItem.name} for ${
-        selectedItem.price * sellQuantity
-      } ${resourceType}!`
-    );
+    setPlayerInventory(updatedInventory);
+    alert(`You sold ${sellQuantity} x ${selectedItem.name} for ${selectedItem.price * sellQuantity} ${resourceType}!`);
+
     setSelectedItem(null);
     setSellQuantity(1);
   };
 
-  const handleBuyItem = (item: Item) => {
-    const resourceType =
-      item.costType && item.costType.trim() !== "" ? item.costType : "Iron Ore";
-    const availableAmount = playerResources?.[resourceType] ?? 0;
-
-    if (availableAmount < item.price) {
-      alert(`You don't have enough ${resourceType} to buy this item!`);
+ const handleBuyItem = async (item: ItemForSale) => {
+    if (!user?.id) {
+      alert("User not logged in");
       return;
     }
 
-    const updatedResources = { ...playerResources };
-    updatedResources[resourceType] -= item.price;
-    setPlayerResources(updatedResources);
+    try {
+      const res = await fetch("/api/market/buy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          itemId: item.id,
+          playerId: user.id,  // pošleme id hráča z kontextu
+        }),
+      });
 
-    const existingItem = playerInventory.find((i) => i.id === item.id);
-    if (existingItem) {
-      const updatedInventory = playerInventory.map((i) =>
-        i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-      );
-      setPlayerInventory(updatedInventory);
-    } else {
-      setPlayerInventory([...playerInventory, { ...item, quantity: 1 }]);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        alert(data.message || "Purchase failed.");
+        return;
+      }
+
+      alert(data.message || `You successfully bought ${item.name}!`);
+    } catch (error) {
+      console.error("Buy error:", error);
+      alert("An error occurred while buying the item.");
     }
-
-    alert(`You bought ${item.name} for ${item.price} ${resourceType}!`);
   };
 
   return (
     <div className="text-white">
       <h3 className="text-lg font-semibold text-purple-400 mb-2">Trade with NPC</h3>
 
-      {/* Zdroje hráča */}
+      {/* Player resources */}
       <div className="mb-4">
-  <h4 className="font-bold text-blue-400 mb-2">Your Resources:</h4>
-  {Object.entries(playerResources ?? {}).length > 0 ? (
-    <ul>
-      {Object.entries(playerResources ?? {}).map(([resource, amount]) => (
-        <li key={resource}>
-          {resource}: <span className="text-yellow-400">{amount}</span>
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <p className="text-gray-400 italic">No resources available.</p>
-  )}
-</div>
+        <h4 className="font-bold text-blue-400 mb-2">Your Resources:</h4>
+        {Object.entries(playerResources).length > 0 ? (
+          <ul>
+            {Object.entries(playerResources).map(([resource, amount]) => (
+              <li key={resource}>
+                {resource}: <span className="text-yellow-400">{amount}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-400 italic">No resources available.</p>
+        )}
+      </div>
 
-
-      {/* Items for sale */}
+      {/* Items for Sale */}
       <div className="mb-4">
         <h4 className="font-bold text-blue-400 mb-2">Items for Sale:</h4>
         <ul>
@@ -137,10 +129,14 @@ const Trade: React.FC<TradeProps> = ({
                   <span className="text-white">{item.name}</span>
                   <p className="text-sm text-gray-400">{item.description}</p>
                   <p className="text-yellow-500">
-                    {item.price}{" "}
-                    {item.costType && item.costType.trim() !== ""
-                      ? item.costType
-                      : "Iron Ore"}
+                    {["iron", "credits", "gold"].map((currency) => {
+                      const amount = (item as any)[currency];
+                      return amount > 0 ? (
+                        <span key={currency} className="mr-2">
+                          {amount} {currency}
+                        </span>
+                      ) : null;
+                    })}
                   </p>
                 </div>
                 <button
@@ -181,15 +177,12 @@ const Trade: React.FC<TradeProps> = ({
         </ul>
       </div>
 
-      {/* Sell summary with quantity selector */}
+      {/* Sell Form */}
       {selectedItem && (
         <div className="mb-4">
           <h5 className="text-yellow-300">Selected Item: {selectedItem.name}</h5>
           <p className="text-sm text-gray-400">
-            Price per unit: {selectedItem.price}{" "}
-            {selectedItem.costType && selectedItem.costType.trim() !== ""
-              ? selectedItem.costType
-              : "Iron Ore"}
+            Price per unit: {selectedItem.price} {selectedItem.contentType}
           </p>
           <label className="block mt-2 mb-1" htmlFor="sellQuantity">
             Quantity to sell (max {selectedItem.quantity}):
@@ -202,7 +195,10 @@ const Trade: React.FC<TradeProps> = ({
             value={sellQuantity}
             onChange={(e) =>
               setSellQuantity(
-                Math.min(Math.max(1, Number(e.target.value)), selectedItem.quantity)
+                Math.min(
+                  Math.max(1, Number(e.target.value)),
+                  selectedItem.quantity
+                )
               )
             }
             className="w-20 p-1 rounded text-black"
@@ -214,7 +210,9 @@ const Trade: React.FC<TradeProps> = ({
         onClick={handleSellItem}
         disabled={!selectedItem}
         className={`w-full p-2 ${
-          !selectedItem ? "bg-gray-500 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
+          !selectedItem
+            ? "bg-gray-500 cursor-not-allowed"
+            : "bg-red-600 hover:bg-red-700"
         } rounded-lg`}
       >
         Sell Item
