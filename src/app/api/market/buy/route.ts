@@ -1,5 +1,5 @@
 import { db } from "@lib/db/db";
-import { players, playerInventory, items, playerResources, miningNodes } from "@lib/db/schema";
+import { players, playerInventory, items, playerResources } from "@lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Načítaj hráča podľa playerId
+  // Načítaj hráča
   const playersFound = await db
     .select()
     .from(players)
@@ -33,35 +33,29 @@ export async function POST(req: Request) {
     );
   }
 
-  // Načítaj playerResources pre hráča
+  // Načítaj playerResources
   const resources = await db
     .select()
     .from(playerResources)
     .where(eq(playerResources.player_id, playerId));
   console.log("playerResources:", resources);
 
-  // Vytvoríme súhrn dostupných zdrojov zo základných + mining nodes
+  // Spočítaj všetky dostupné zdroje
   const totalResources = {
     credits: player.credits || 0,
     iron: player.iron || 0,
     gold: player.gold || 0,
   };
 
-  // Tu predpokladám, že mining_node_id predstavuje typ zdroja:
-  // napr. 1 = iron, 2 = gold, 3 = credits
   for (const res of resources) {
-    if (res.mining_node_id === 1) {
-      totalResources.iron += res.quantity;
-    } else if (res.mining_node_id === 2) {
-      totalResources.gold += res.quantity;
-    } else if (res.mining_node_id === 3) {
-      totalResources.credits += res.quantity;
-    }
+    if (res.mining_node_id === 1) totalResources.iron += res.quantity;
+    if (res.mining_node_id === 2) totalResources.gold += res.quantity;
+    if (res.mining_node_id === 3) totalResources.credits += res.quantity;
   }
 
   console.log("totalResources:", totalResources);
 
-  // Načítaj položku priamo z items
+  // Načítaj item
   const itemsFound = await db
     .select()
     .from(items)
@@ -78,13 +72,12 @@ export async function POST(req: Request) {
     );
   }
 
-  // Overenie zdrojov podľa totalResources
   const cost = {
     credits: item.credits || 0,
     iron: item.iron || 0,
     gold: item.gold || 0,
   };
-  console.log("cost", cost);
+  console.log("cost:", cost);
 
   if (
     totalResources.credits < cost.credits ||
@@ -97,7 +90,7 @@ export async function POST(req: Request) {
     });
   }
 
-  // Odpočítaj zdroje hráča z pôvodného playera (len základné zdroje, nie mining nodes)
+  // Odpočítaj základné zdroje hráča
   await db
     .update(players)
     .set({
@@ -107,7 +100,7 @@ export async function POST(req: Request) {
     })
     .where(eq(players.id, playerId));
 
-  // Skontroluj inventár hráča pre danú položku
+  // Inventár: skontroluj či item už má
   const inventoryFound = await db
     .select()
     .from(playerInventory)
@@ -123,47 +116,21 @@ export async function POST(req: Request) {
   console.log("existingItem:", existingItem);
 
   if (existingItem) {
-    // Ak už má hráč túto položku, zvýš množstvo o 1
     await db
       .update(playerInventory)
       .set({ quantity: existingItem.quantity + 1 })
-      .where(eq(playerInventory.id, existingItem.id));
+      .where(
+        and(
+          eq(playerInventory.player_id, playerId),
+          eq(playerInventory.item_id, item.id)
+        )
+      );
   } else {
-    // Ak ju ešte nemá, vlož ju do inventára
     await db.insert(playerInventory).values({
       player_id: playerId,
       item_id: item.id,
       quantity: 1,
       is_equipped: false,
-    });
-  }
-
-  // Aktualizuj alebo vlož playerResources podľa mining_node_id z item.id
-  const existingResource = await db
-    .select()
-    .from(playerResources)
-    .where(
-      and(
-        eq(playerResources.player_id, playerId),
-        eq(playerResources.mining_node_id, item.id)
-      )
-    )
-    .limit(1);
-
-  console.log("existingResource:", existingResource);
-
-  if (existingResource.length > 0) {
-    const resource = existingResource[0];
-    await db
-      .update(playerResources)
-      .set({ quantity: resource.quantity + 1 })
-      .where(eq(playerResources.id, resource.id));
-  } else {
-    await db.insert(playerResources).values({
-      player_id: playerId,
-      mining_node_id: item.id,
-      quantity: 1,
-      last_mined_at: null,
     });
   }
 
