@@ -13,3 +13,8 @@ npx drizzle-kit migrate
 npx drizzle-kit studio
  
  zdroje mame nefunguje nakup v databaze nemame nakup nove zdroje
+ z card na pevno cislo ale neprima sa v modal  <NpcModal
+          npcId={11}
+          onClose={closeModal}
+          initialTab={currentInteraction}
+        />
