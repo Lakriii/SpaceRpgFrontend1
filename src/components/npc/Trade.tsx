@@ -38,33 +38,66 @@ const Trade: React.FC<TradeProps> = ({
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [sellQuantity, setSellQuantity] = useState<number>(1);
 
-  const handleSellItem = () => {
-    if (!selectedItem) return;
-    if (sellQuantity < 1) return alert("Quantity must be at least 1");
-    if (sellQuantity > selectedItem.quantity)
-      return alert(`You don't have that many ${selectedItem.name} to sell`);
+  const handleSellItem = async () => {
+  if (!selectedItem || !user?.id) return;
 
-    const resourceType = selectedItem.contentType || "iron";
-    const updatedResources = { ...playerResources };
-    updatedResources[resourceType] =
-      (updatedResources[resourceType] || 0) + selectedItem.price * sellQuantity;
-    setPlayerResources(updatedResources);
+  if (sellQuantity < 1) {
+    alert("Quantity must be at least 1");
+    return;
+  }
 
-    const updatedInventory =
-      selectedItem.quantity === sellQuantity
-        ? playerInventory.filter((item) => item.id !== selectedItem.id)
-        : playerInventory.map((item) =>
-            item.id === selectedItem.id
-              ? { ...item, quantity: item.quantity - sellQuantity }
-              : item
-          );
+  if (sellQuantity > selectedItem.quantity) {
+    alert(`You don't have that many ${selectedItem.name} to sell`);
+    return;
+  }
 
-    setPlayerInventory(updatedInventory);
-    alert(`You sold ${sellQuantity} x ${selectedItem.name} for ${selectedItem.price * sellQuantity} ${resourceType}!`);
+  try {
+    const res = await fetch("/api/market/sell", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        playerId: user.id,
+        itemId: selectedItem.id,
+        quantity: sellQuantity,
+      }),
+    });
 
-    setSelectedItem(null);
-    setSellQuantity(1);
-  };
+    const data = await res.json();
+
+if (!res.ok || !data.success) {
+  alert(data.message || "Sale failed.");
+  return;
+}
+
+// Transformuj updatedResources z pole objektov na mapu
+const transformedResources: PlayerResources = {};
+data.updatedResources.forEach((res: { mining_node_id: number; quantity: number }) => {
+  // Mapuj mining_node_id na názov, napríklad:
+  if (res.mining_node_id === 1) transformedResources.iron = res.quantity;
+  else if (res.mining_node_id === 4) transformedResources.gold = res.quantity;
+  else {
+    // prípadne iné zdroje podľa id
+    transformedResources[`node_${res.mining_node_id}`] = res.quantity;
+  }
+});
+
+// Nastav transformované zdroje
+setPlayerResources(transformedResources);
+
+// Inventory môžeš nastaviť priamo (je už v správnom tvare)
+setPlayerInventory(data.updatedInventory);
+
+alert(data.message || `You sold ${sellQuantity} x ${selectedItem.name}!`);
+setSelectedItem(null);
+setSellQuantity(1);
+
+  } catch (error) {
+    console.error("Sell error:", error);
+    alert("An error occurred while selling the item.");
+  }
+};
 
  const handleBuyItem = async (item: ItemForSale) => {
     if (!user?.id) {

@@ -2,6 +2,8 @@ import { db } from "@lib/db/db";
 import { players, playerInventory, items, playerResources } from "@lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { sql } from 'drizzle-orm';
+
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -90,15 +92,42 @@ export async function POST(req: Request) {
     });
   }
 
-  // Odpočítaj základné zdroje hráča
-  await db
-    .update(players)
-    .set({
-      credits: player.credits - cost.credits,
-      iron: player.iron - cost.iron,
-      gold: player.gold - cost.gold,
-    })
-    .where(eq(players.id, playerId));
+  const IRON_NODE_ID = 1; // alebo aké ID má iron v mining_nodes
+const GOLD_NODE_ID = 4; // alebo aké ID má gold v mining_nodes
+
+ // 1. Odpočítaj credits z tabuľky players
+await db
+  .update(players)
+  .set({
+    credits: player.credits - cost.credits,
+  })
+  .where(eq(players.id, playerId));
+
+// 2. Odpočítaj iron z tabuľky player_resources
+await db
+  .update(playerResources)
+  .set({
+    quantity: sql`${playerResources.quantity} - ${cost.iron}`,
+  })
+  .where(
+    and(
+      eq(playerResources.player_id, playerId),
+      eq(playerResources.mining_node_id, IRON_NODE_ID)
+    )
+  );
+
+// 3. Odpočítaj gold z tabuľky player_resources
+await db
+  .update(playerResources)
+  .set({
+    quantity: sql`${playerResources.quantity} - ${cost.gold}`,
+  })
+  .where(
+    and(
+      eq(playerResources.player_id, playerId),
+      eq(playerResources.mining_node_id, GOLD_NODE_ID)
+    )
+  );
 
   // Inventár: skontroluj či item už má
   const inventoryFound = await db
