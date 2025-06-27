@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import Modal from "./Modal";  // cesta podľa tvojho projektu
 type ItemForSale = {
   id: number;
   name: string;
@@ -34,100 +35,96 @@ const Trade: React.FC<TradeProps> = ({
   setPlayerInventory,
   itemsForSale,
 }) => {
-  const { user } = useAuth();  // získaš usera s id
+  const { user } = useAuth();
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [sellQuantity, setSellQuantity] = useState<number>(1);
 
+  // nový stav pre modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState<string | undefined>();
+  const [modalMessage, setModalMessage] = useState("");
+
+  // Pomocná funkcia pre zobrazovanie modalu
+  const showModal = (message: string, title?: string) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setModalOpen(true);
+  };
+
   const handleSellItem = async () => {
-  if (!selectedItem || !user?.id) return;
+    if (!selectedItem || !user?.id) return;
 
-  if (sellQuantity < 1) {
-    alert("Quantity must be at least 1");
-    return;
-  }
+    if (sellQuantity < 1) {
+      showModal("Quantity must be at least 1", "Invalid Quantity");
+      return;
+    }
 
-  if (sellQuantity > selectedItem.quantity) {
-    alert(`You don't have that many ${selectedItem.name} to sell`);
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/market/sell", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        playerId: user.id,
-        itemId: selectedItem.id,
-        quantity: sellQuantity,
-      }),
-    });
-
-    const data = await res.json();
-
-if (!res.ok || !data.success) {
-  alert(data.message || "Sale failed.");
-  return;
-}
-
-// Transformuj updatedResources z pole objektov na mapu
-const transformedResources: PlayerResources = {};
-data.updatedResources.forEach((res: { mining_node_id: number; quantity: number }) => {
-  // Mapuj mining_node_id na názov, napríklad:
-  if (res.mining_node_id === 1) transformedResources.iron = res.quantity;
-  else if (res.mining_node_id === 4) transformedResources.gold = res.quantity;
-  else {
-    // prípadne iné zdroje podľa id
-    transformedResources[`node_${res.mining_node_id}`] = res.quantity;
-  }
-});
-
-// Nastav transformované zdroje
-setPlayerResources(transformedResources);
-
-// Inventory môžeš nastaviť priamo (je už v správnom tvare)
-setPlayerInventory(data.updatedInventory);
-
-alert(data.message || `You sold ${sellQuantity} x ${selectedItem.name}!`);
-setSelectedItem(null);
-setSellQuantity(1);
-
-  } catch (error) {
-    console.error("Sell error:", error);
-    alert("An error occurred while selling the item.");
-  }
-};
-
- const handleBuyItem = async (item: ItemForSale) => {
-    if (!user?.id) {
-      alert("User not logged in");
+    if (sellQuantity > selectedItem.quantity) {
+      showModal(`You don't have that many ${selectedItem.name} to sell`, "Insufficient Items");
       return;
     }
 
     try {
-      const res = await fetch("/api/market/buy", {
+      const res = await fetch("/api/market/sell", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          itemId: item.id,
-          playerId: user.id,  // pošleme id hráča z kontextu
+          playerId: user.id,
+          itemId: selectedItem.id,
+          quantity: sellQuantity,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        alert(data.message || "Purchase failed.");
+        showModal(data.message || "Sale failed.", "Error");
         return;
       }
 
-      alert(data.message || `You successfully bought ${item.name}!`);
+      const transformedResources: PlayerResources = {};
+      data.updatedResources.forEach((res: { mining_node_id: number; quantity: number }) => {
+        if (res.mining_node_id === 1) transformedResources.iron = res.quantity;
+        else if (res.mining_node_id === 4) transformedResources.gold = res.quantity;
+        else transformedResources[`node_${res.mining_node_id}`] = res.quantity;
+      });
+
+      setPlayerResources(transformedResources);
+      setPlayerInventory(data.updatedInventory);
+
+      showModal(data.message || `You sold ${sellQuantity} x ${selectedItem.name}!`, "Success");
+      setSelectedItem(null);
+      setSellQuantity(1);
+    } catch (error) {
+      console.error("Sell error:", error);
+      showModal("An error occurred while selling the item.", "Error");
+    }
+  };
+
+  const handleBuyItem = async (item: ItemForSale) => {
+    if (!user?.id) {
+      showModal("User not logged in", "Error");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/market/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId: item.id, playerId: user.id }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        showModal(data.message || "Purchase failed.", "Error");
+        return;
+      }
+
+      showModal(data.message || `You successfully bought ${item.name}!`, "Success");
     } catch (error) {
       console.error("Buy error:", error);
-      alert("An error occurred while buying the item.");
+      showModal("An error occurred while buying the item.", "Error");
     }
   };
 
@@ -250,6 +247,8 @@ setSellQuantity(1);
       >
         Sell Item
       </button>
+      {/* Modal */}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={modalTitle} message={modalMessage} />
     </div>
   );
 };
