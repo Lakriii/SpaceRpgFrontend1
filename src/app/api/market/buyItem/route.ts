@@ -1,5 +1,10 @@
+//toto je market 
+
 import { NextResponse } from "next/server";
 import buyItem from "@lib/market/buyItem";
+import { db } from "@lib/db/db";
+import { players } from "@lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
@@ -12,12 +17,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // price by mal byť objekt, napr. { "Iron Ore": 500, "Copper Ore": 10 }
-    // buyItem by mala byť funkcia, ktorá spracuje platbu zdrojmi podľa price
+    // Načítať hráča, aby sme skontrolovali credits ešte pred nákupom
+    const [player] = await db
+      .select()
+      .from(players)
+      .where(eq(players.id, playerId))
+      .limit(1);
 
+    if (!player) {
+      return NextResponse.json(
+        { success: false, message: "Player not found" },
+        { status: 404 }
+      );
+    }
+
+    const creditsNeeded = price.credits || 0;
+    if (player.credits < creditsNeeded) {
+      return NextResponse.json(
+        { success: false, message: `❌ Not enough credits! You have ${player.credits}, need ${creditsNeeded}` },
+        { status: 400 }
+      );
+    }
+
+    // Ak je všetko OK, zavoláme buyItem
     const result = await buyItem(playerId, itemId, price);
-
-    // result by mal obsahovať success: boolean a prípadne aktualizované dáta
 
     if (!result.success) {
       return NextResponse.json({ success: false, message: result.message || "Purchase failed" }, { status: 400 });
@@ -31,3 +54,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

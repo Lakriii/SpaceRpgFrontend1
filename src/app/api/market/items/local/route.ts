@@ -2,9 +2,14 @@
 import { NextResponse } from "next/server";
 import { getMarketItemsByType } from "@lib/market/getMarketItems";
 
+
 export async function GET() {
   try {
     const items = await getMarketItemsByType("local");
+    if (!items) {
+      console.error("No items returned from database");
+      return NextResponse.json({ error: "No items found" }, { status: 404 });
+    }
     return NextResponse.json(items);
   } catch (error) {
     console.error("Failed to fetch market items:", error);

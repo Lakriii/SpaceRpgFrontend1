@@ -19,3 +19,6 @@ npx drizzle-kit studio
           initialTab={currentInteraction}
         />
 npc kupovanie funguje ale peniaze sa neodcitaju/predaj sa nepricitaju a skace eror pri predaji
+
+
+market nefunguje kontrola ci je dost penazi 
