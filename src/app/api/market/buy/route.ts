@@ -9,7 +9,6 @@ export async function POST(req: Request) {
   const body = await req.json();
   const { itemId, playerId } = body;
 
-  console.log("📌 itemId:", itemId, "playerId:", playerId);
 
   if (!playerId) {
     return NextResponse.json(
@@ -26,7 +25,7 @@ export async function POST(req: Request) {
     .limit(1);
 
   const player = playersFound[0];
-  console.log("player:", player);
+  
 
   if (!player) {
     return NextResponse.json(
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
     .select()
     .from(playerResources)
     .where(eq(playerResources.player_id, playerId));
-  console.log("playerResources:", resources);
+  
 
   // Spočítaj všetky dostupné zdroje
   const totalResources = {
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
     if (res.mining_node_id === 3) totalResources.credits += res.quantity;
   }
 
-  console.log("totalResources:", totalResources);
+  
 
   // Načítaj item
   const itemsFound = await db
@@ -65,7 +64,7 @@ export async function POST(req: Request) {
     .limit(1);
 
   const item = itemsFound[0];
-  console.log("item:", item);
+
 
   if (!item) {
     return NextResponse.json(
@@ -79,7 +78,7 @@ export async function POST(req: Request) {
     iron: item.iron || 0,
     gold: item.gold || 0,
   };
-  console.log("cost:", cost);
+ 
 
   if (
     totalResources.credits < cost.credits ||
@@ -142,7 +141,7 @@ await db
     .limit(1);
 
   const existingItem = inventoryFound[0];
-  console.log("existingItem:", existingItem);
+
 
   if (existingItem) {
     await db

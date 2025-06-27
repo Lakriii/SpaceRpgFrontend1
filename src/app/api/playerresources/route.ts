@@ -8,12 +8,10 @@ import { playerResources } from "@lib/db/schema/mining";
 import { miningNodes } from "@lib/db/schema/mining";
 
 export async function GET(request: Request) {
-  console.log("✅ [STEP 1] GET /api/playerresources called");
 
   try {
     const url = new URL(request.url);
     const playerId = url.searchParams.get("playerId");
-    console.log("📌 playerId:", playerId);
 
     if (!playerId) {
       console.warn("❌ Missing playerId in request");
@@ -21,7 +19,6 @@ export async function GET(request: Request) {
     }
 
     // Fetch player
-    console.log("➡️ [STEP 2] Fetching player...");
     const player = await db
       .select()
       .from(players)
@@ -32,10 +29,8 @@ export async function GET(request: Request) {
       console.warn("❌ Player not found");
       return NextResponse.json({ error: "Player not found" }, { status: 404 });
     }
-    console.log("✅ [STEP 2] Player fetched:", player);
 
     // Fetch resources
-    console.log("➡️ [STEP 3] Fetching player resources...");
     const resourcesRows = await db
       .select({
         mining_node_id: playerResources.mining_node_id,
@@ -46,7 +41,6 @@ export async function GET(request: Request) {
       .innerJoin(miningNodes, eq(playerResources.mining_node_id, miningNodes.id))
       .where(eq(playerResources.player_id, Number(playerId)));
 
-    console.log("✅ [STEP 3] Resources fetched:", resourcesRows);
 
     const resources: Record<string, number> = {};
     resourcesRows.forEach((row) => {
@@ -56,7 +50,7 @@ export async function GET(request: Request) {
     });
 
     // Fetch inventory
-    console.log("➡️ [STEP 4] Fetching player inventory...");
+
     const inventoryItems = await db
       .select({
         itemId: playerInventory.item_id,
@@ -74,7 +68,6 @@ export async function GET(request: Request) {
       .innerJoin(items, eq(playerInventory.item_id, items.id))
       .where(eq(playerInventory.player_id, Number(playerId)));
 
-    console.log("✅ [STEP 4] Inventory items fetched:", inventoryItems);
 
     // Transform and return
     const transformedInventory = inventoryItems.map((inv) => ({
@@ -89,7 +82,6 @@ export async function GET(request: Request) {
       quantity: inv.quantity,
     }));
 
-    console.log("✅ [FINAL] Sending full response");
 
     return NextResponse.json({
       player: player[0],

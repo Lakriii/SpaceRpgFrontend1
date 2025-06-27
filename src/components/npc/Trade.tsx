@@ -29,27 +29,26 @@ type TradeProps = {
 };
 
 const Trade: React.FC<TradeProps> = ({
-  playerResources,
+  playerResources = {},
   setPlayerResources,
-  playerInventory,
+  playerInventory = [],
   setPlayerInventory,
-  itemsForSale,
+  itemsForSale = [],
 }) => {
   const { user } = useAuth();
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [sellQuantity, setSellQuantity] = useState<number>(1);
 
-  // nový stav pre modal
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalTitle, setModalTitle] = useState<string | undefined>();
-  const [modalMessage, setModalMessage] = useState("");
+const [modalOpen, setModalOpen] = useState(false);
+const [modalTitle, setModalTitle] = useState<string | undefined>();
+const [modalMessage, setModalMessage] = useState("");
 
-  // Pomocná funkcia pre zobrazovanie modalu
-  const showModal = (message: string, title?: string) => {
-    setModalTitle(title);
-    setModalMessage(message);
-    setModalOpen(true);
-  };
+const showModal = (message: string, title?: string) => {
+  setModalTitle(title);
+  setModalMessage(message);
+  setModalOpen(true);
+};
+
 
   const handleSellItem = async () => {
     if (!selectedItem || !user?.id) return;
@@ -82,12 +81,13 @@ const Trade: React.FC<TradeProps> = ({
         return;
       }
 
-      const transformedResources: PlayerResources = {};
-      data.updatedResources.forEach((res: { mining_node_id: number; quantity: number }) => {
-        if (res.mining_node_id === 1) transformedResources.iron = res.quantity;
-        else if (res.mining_node_id === 4) transformedResources.gold = res.quantity;
-        else transformedResources[`node_${res.mining_node_id}`] = res.quantity;
-      });
+   const transformedResources: PlayerResources = {};
+data.updatedResources.forEach((res: { mining_node_id: number; quantity: number }) => {
+  if (res.mining_node_id === 1) transformedResources.iron = res.quantity;
+  else if (res.mining_node_id === 4) transformedResources.gold = res.quantity;
+  else transformedResources[`node_${res.mining_node_id}`] = res.quantity;
+});
+
 
       setPlayerResources(transformedResources);
       setPlayerInventory(data.updatedInventory);
@@ -102,31 +102,63 @@ const Trade: React.FC<TradeProps> = ({
   };
 
   const handleBuyItem = async (item: ItemForSale) => {
-    if (!user?.id) {
-      showModal("User not logged in", "Error");
+  if (!user?.id) {
+    showModal("User not logged in", "Error");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/market/buy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId: item.id, playerId: user.id }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      showModal(data.message || "Purchase failed.", "Error");
       return;
     }
 
-    try {
-      const res = await fetch("/api/market/buy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: item.id, playerId: user.id }),
+    if (Array.isArray(data.updatedResources)) {
+      const transformedResources: PlayerResources = {};
+      data.updatedResources.forEach((res: { mining_node_id: number; quantity: number }) => {
+        if (res.mining_node_id === 1) transformedResources.iron = res.quantity;
+        else if (res.mining_node_id === 4) transformedResources.gold = res.quantity;
+        else transformedResources[`node_${res.mining_node_id}`] = res.quantity;
       });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        showModal(data.message || "Purchase failed.", "Error");
-        return;
-      }
-
-      showModal(data.message || `You successfully bought ${item.name}!`, "Success");
-    } catch (error) {
-      console.error("Buy error:", error);
-      showModal("An error occurred while buying the item.", "Error");
+      setPlayerResources(transformedResources);
+    } else {
+      console.warn("No updatedResources found in response");
     }
-  };
+
+    // Tu je manuálna aktualizácia inventára:
+    setPlayerInventory((prevInventory) => {
+      // Skontroluj, či už položka existuje v inventári
+      const existingItem = prevInventory.find((invItem) => invItem.id === item.id);
+
+      if (existingItem) {
+        // Ak áno, zvýš jej quantity (napr. o 1)
+        return prevInventory.map((invItem) =>
+          invItem.id === item.id
+            ? { ...invItem, quantity: invItem.quantity + 1 }
+            : invItem
+        );
+      } else {
+        // Ak nie, pridaj novú položku s quantity 1
+        return [...prevInventory, { ...item, quantity: 1 }];
+      }
+    });
+
+    showModal(data.message || `You successfully bought ${item.name}!`, "Success");
+  } catch (error) {
+    console.error("Buy error:", error);
+    showModal("An error occurred while buying the item.", "Error");
+  }
+};
+
+
 
   return (
     <div className="text-white">
@@ -248,7 +280,13 @@ const Trade: React.FC<TradeProps> = ({
         Sell Item
       </button>
       {/* Modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={modalTitle} message={modalMessage} />
+      <Modal
+  isOpen={modalOpen}
+  onClose={() => setModalOpen(false)}
+  title={modalTitle}
+  message={modalMessage}
+/>
+
     </div>
   );
 };

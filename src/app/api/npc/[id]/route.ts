@@ -6,13 +6,14 @@ import { items } from "@lib/db/schema/items/base";
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }  // tu je Promise
 ) {
-  const npcId = Number(context.params.id);
+  const params = await context.params;           // await params
+  const npcId = Number(params.id);
   console.log(`[API] Received request for NPC ID: ${npcId}`);
 
   if (isNaN(npcId)) {
-    console.warn("[API] Invalid NPC id:", context.params.id);
+    console.warn("[API] Invalid NPC id:", params.id);
     return NextResponse.json({ error: "Invalid NPC id" }, { status: 400 });
   }
 
@@ -35,7 +36,7 @@ export async function GET(
       .select({ interaction_type: npcInteractions.interaction_type })
       .from(npcInteractions)
       .where(eq(npcInteractions.npc_id, npcId));
-    console.log("[API] Fetched interactions:", interactions);
+    
 
     // Načítanie predajných položiek
     const itemsForSaleRaw = await db
@@ -46,11 +47,11 @@ export async function GET(
       })
       .from(npcItemsForSale)
       .where(eq(npcItemsForSale.npc_id, npcId));
-    console.log("[API] Raw items for sale:", itemsForSaleRaw);
+
 
     // Načítanie detailov položiek
     const itemIds = itemsForSaleRaw.map((item) => item.item_id);
-    console.log("[API] Item IDs to fetch:", itemIds);
+ 
 
     let itemsDetails = [];
 
@@ -68,7 +69,7 @@ export async function GET(
         })
         .from(items)
         .where(inArray(items.id, itemIds));
-      console.log("[API] Fetched item details:", itemsDetails);
+
     }
 
     // Spojenie údajov o položkách
@@ -86,7 +87,6 @@ export async function GET(
         rarity: details?.rarity || "common",
         contentType: details?.contentType || "unknown",
       };
-      console.log("[API] Composed item for sale:", item);
       return item;
     });
 
@@ -96,7 +96,6 @@ export async function GET(
       interactions: interactions.map((i) => i.interaction_type),
       itemsForSale,
     };
-    console.log("[API] Final response data:", responseData);
 
     return NextResponse.json(responseData);
   } catch (error: any) {
